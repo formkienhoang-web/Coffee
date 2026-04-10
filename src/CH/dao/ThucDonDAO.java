@@ -6,28 +6,34 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ThucDonDAO {
+
     // 1. Lấy tất cả món ăn
     public List<MonAn> getAll() {
         List<MonAn> list = new ArrayList<>();
         try {
             Connection cons = DBConnection.getConnection();
-            // Lấy đủ cột: MaHH (để trừ kho) và HinhAnh (để hiển thị)
-            String sql = "SELECT MaMon, TenMon, DonGia, DonViTinh, MaHH, HinhAnh FROM ThucDon";
+
+            // ❌ ĐÃ BỎ MaHH
+            String sql = "SELECT MaMon, TenMon, DonGia, DonViTinh, TenDanhMuc, HinhAnh FROM ThucDon";
             PreparedStatement ps = cons.prepareStatement(sql);
             ResultSet rs = ps.executeQuery();
+
             while (rs.next()) {
                 list.add(new MonAn(
-                    rs.getString(1), 
-                    rs.getString(2), 
-                    rs.getDouble(3), 
-                    rs.getString(4), 
-                    rs.getString(5), // MaHH
-                    rs.getString(6)  // HinhAnh
+                        rs.getString("MaMon"),
+                        rs.getString("TenMon"),
+                        rs.getDouble("DonGia"),
+                        rs.getString("DonViTinh"),
+                        rs.getString("HinhAnh"),
+                        rs.getString("TenDanhMuc")
                 ));
             }
+
             ps.close();
             cons.close();
-        } catch (Exception e) { e.printStackTrace(); }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return list;
     }
 
@@ -35,20 +41,25 @@ public class ThucDonDAO {
     public boolean add(MonAn m) {
         try {
             Connection cons = DBConnection.getConnection();
-            String sql = "INSERT INTO ThucDon(MaMon, TenMon, DonGia, DonViTinh, MaHH, HinhAnh) VALUES(?,?,?,?,?,?)";
+
+            // ❌ ĐÃ BỎ MaHH
+            String sql = "INSERT INTO ThucDon(MaMon, TenMon, DonGia, DonViTinh, TenDanhMuc, HinhAnh) VALUES(?,?,?,?,?,?)";
             PreparedStatement ps = cons.prepareStatement(sql);
+
             ps.setString(1, m.getMaMon());
             ps.setString(2, m.getTenMon());
             ps.setDouble(3, m.getDonGia());
             ps.setString(4, m.getDonViTinh());
-            ps.setString(5, m.getMaHH());
+            ps.setString(5, m.getTenDanhMuc());
             ps.setString(6, m.getHinhAnh());
+
             int row = ps.executeUpdate();
             ps.close();
             cons.close();
+
             return row > 0;
-        } catch (Exception e) { 
-            e.printStackTrace(); 
+        } catch (Exception e) {
+            e.printStackTrace();
             return false;
         }
     }
@@ -57,20 +68,27 @@ public class ThucDonDAO {
     public boolean update(MonAn m) {
         try {
             Connection cons = DBConnection.getConnection();
-            String sql = "UPDATE ThucDon SET TenMon=?, DonGia=?, DonViTinh=?, MaHH=?, HinhAnh=? WHERE MaMon=?";
+
+            // ❌ ĐÃ BỎ MaHH
+            String sql = "UPDATE ThucDon SET TenMon=?, DonGia=?, DonViTinh=?, TenDanhMuc=?, HinhAnh=? WHERE MaMon=?";
             PreparedStatement ps = cons.prepareStatement(sql);
+
             ps.setString(1, m.getTenMon());
             ps.setDouble(2, m.getDonGia());
             ps.setString(3, m.getDonViTinh());
-            ps.setString(4, m.getMaHH());
+            ps.setString(4, m.getTenDanhMuc());
             ps.setString(5, m.getHinhAnh());
             ps.setString(6, m.getMaMon());
-            
+
             int row = ps.executeUpdate();
             ps.close();
             cons.close();
+
             return row > 0;
-        } catch (Exception e) { return false; }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     // 4. Xóa món ăn
@@ -79,12 +97,17 @@ public class ThucDonDAO {
             Connection cons = DBConnection.getConnection();
             String sql = "DELETE FROM ThucDon WHERE MaMon=?";
             PreparedStatement ps = cons.prepareStatement(sql);
+
             ps.setString(1, maMon);
             int row = ps.executeUpdate();
+
             ps.close();
             cons.close();
             return row > 0;
-        } catch (Exception e) { return false; }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     // 5. Sinh mã tự động
@@ -92,18 +115,23 @@ public class ThucDonDAO {
         String newID = "M01";
         try {
             Connection cons = DBConnection.getConnection();
-            ResultSet rs = cons.createStatement().executeQuery("SELECT MaMon FROM ThucDon ORDER BY length(MaMon) DESC, MaMon DESC LIMIT 1");
+
+            ResultSet rs = cons.createStatement().executeQuery(
+                    "SELECT MaMon FROM ThucDon ORDER BY length(MaMon) DESC, MaMon DESC LIMIT 1"
+            );
+
             if (rs.next()) {
                 String lastID = rs.getString(1);
                 int num = Integer.parseInt(lastID.substring(1)) + 1;
                 newID = "M" + (num < 10 ? "0" + num : num);
             }
+
             cons.close();
         } catch (Exception e) {}
         return newID;
     }
 
-    // 6. Đếm tổng số món ăn (Dùng cho Trang Chủ)
+    // 6. Đếm tổng số món ăn
     public int countAll() {
         int count = 0;
         try {
@@ -111,11 +139,11 @@ public class ThucDonDAO {
             String sql = "SELECT COUNT(*) FROM ThucDon";
             PreparedStatement ps = cons.prepareStatement(sql);
             ResultSet rs = ps.executeQuery();
-            
+
             if (rs.next()) {
                 count = rs.getInt(1);
             }
-            
+
             ps.close();
             cons.close();
         } catch (Exception e) {

@@ -101,8 +101,8 @@ public class KhachHangView extends JPanel {
         pnlSearch.setBackground(TEAL_COLOR);
         txtTimKiem = new JTextField(15);
         btnTimKiem = createStyledButton("Tìm kiếm");
-        pnlSearch.add(new JLabel("Tên KH: ")).setForeground(Color.WHITE);
-        pnlSearch.add(txtTimKiem); pnlSearch.add(btnTimKiem);
+        pnlSearch.add(new JLabel("Tìm kiếm theo tên KH: ")).setForeground(Color.WHITE);
+        pnlSearch.add(txtTimKiem);
         pnlFormContainer.add(pnlSearch);
 
         add(pnlFormContainer, BorderLayout.NORTH);

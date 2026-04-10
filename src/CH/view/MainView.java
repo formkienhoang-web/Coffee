@@ -1,6 +1,8 @@
 package CH.view;
 
 import CH.controller.*;
+import CH.model.Session;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -12,12 +14,13 @@ import java.util.Map;
 public class MainView extends JFrame {
 
     // ======================
-    // CONSTANT
+    // NEW COLOR THEME (GIỐNG ẢNH)
     // ======================
-    private final Color SIDEBAR_COLOR = new Color(0, 91, 110);
-    private final Color HOVER_COLOR   = new Color(0, 120, 145);
-    private final Color ACCENT_RED    = new Color(255, 77, 77);
-    private final Color LOGOUT_COLOR  = new Color(220, 53, 69); // Màu đỏ cho nút đăng xuất
+    private final Color SIDEBAR_COLOR = new Color(52, 87, 87);
+    private final Color HOVER_COLOR   = new Color(72, 117, 117);
+    private final Color ACTIVE_COLOR  = new Color(96, 140, 140);
+    private final Color TEXT_COLOR    = Color.WHITE;
+    private final Color LOGOUT_COLOR  = new Color(52, 87, 87);
 
     private CardLayout cardLayout;
     private JPanel pnlContent;
@@ -26,9 +29,6 @@ public class MainView extends JFrame {
 
     private final Map<String, JButton> menuButtons = new HashMap<>();
 
-    // ======================
-    // VIEW
-    // ======================
     private TrangChuView trangChuView;
     private DatMonView datMonView;
     private ThucDonView thucDonView;
@@ -37,12 +37,10 @@ public class MainView extends JFrame {
     private HoaDonView hoaDonView;
     private KhoView khoView;
     private DoanhThuView doanhThuView;
+    private DanhMucView danhMucView;
 
-    // ======================
-    // CONSTRUCTOR
-    // ======================
     public MainView() {
-        setTitle("Hệ Thống Quản Lý Cửa Hàng Đồ Ăn Nhanh");
+        setTitle("HỆ THỐNG QUẢN LÝ QUÁN DINOCOFFEE");
         setSize(1300, 750);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -57,47 +55,54 @@ public class MainView extends JFrame {
     }
 
     // ======================
-    // HEADER 
+    // HEADER
     // ======================
     private void initHeader() {
         JPanel pnlHeader = new JPanel(new BorderLayout());
         pnlHeader.setBackground(Color.WHITE);
         pnlHeader.setBorder(new EmptyBorder(10, 20, 10, 20));
 
-        JLabel lblTitle = new JLabel("HỆ THỐNG QUẢN LÝ CỬA HÀNG ĐỒ ĂN NHANH");
+        JLabel lblTitle = new JLabel("HỆ THỐNG QUẢN LÝ QUÁN DINOCOFFEE");
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
         lblTitle.setForeground(SIDEBAR_COLOR);
 
         JPanel pnlRight = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 0));
         pnlRight.setBackground(Color.WHITE);
 
-        lblUser = new JLabel("Xin chào, Vui lòng đăng nhập"); 
+        lblUser = new JLabel("Xin chào, Vui lòng đăng nhập");
         lblUser.setFont(new Font("Segoe UI", Font.PLAIN, 14));
 
-        // --- TÙY CHỈNH NÚT ĐĂNG XUẤT NỔI BẬT ---
-        JButton btnLogout = new JButton(" Đăng xuất ");
+        JButton btnLogout = new JButton("Đăng xuất");
         btnLogout.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        btnLogout.setBackground(LOGOUT_COLOR); // Nền đỏ
-        btnLogout.setForeground(Color.WHITE);  // Chữ trắng
+        btnLogout.setForeground(Color.WHITE);
+
+// nền giống sidebar
+        btnLogout.setBackground(SIDEBAR_COLOR);
+
+// bo góc + padding
+        btnLogout.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
         btnLogout.setFocusPainted(false);
-        btnLogout.setBorderPainted(false);      // Tắt viền mặc định để màu nền phẳng đẹp hơn
-        btnLogout.setOpaque(true);             // Đảm bảo hiển thị màu nền trên MacOS/Linux
         btnLogout.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        
-        // Hiệu ứng Hover cho nút Đăng xuất
+
+// QUAN TRỌNG: để màu hiển thị đúng
+        btnLogout.setContentAreaFilled(true);
+        btnLogout.setOpaque(true);
+        btnLogout.setBorderPainted(false);
+
+// hover nhẹ giống mẫu
         btnLogout.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
-                btnLogout.setBackground(new Color(200, 35, 51)); // Đỏ đậm hơn khi di chuột
+                btnLogout.setBackground(new Color(72, 117, 117)); // sáng hơn nhẹ
             }
+
             @Override
             public void mouseExited(MouseEvent e) {
-                btnLogout.setBackground(LOGOUT_COLOR); // Quay lại màu đỏ ban đầu
+                btnLogout.setBackground(SIDEBAR_COLOR);
             }
         });
 
         btnLogout.addActionListener(e -> handleLogout());
-        
 
         pnlRight.add(lblUser);
         pnlRight.add(btnLogout);
@@ -108,87 +113,71 @@ public class MainView extends JFrame {
         add(pnlHeader, BorderLayout.NORTH);
     }
 
-    // Hàm xử lý đăng xuất và quay về trang Login
     private void handleLogout() {
         int confirm = JOptionPane.showConfirmDialog(
                 this,
                 "Bạn có chắc chắn muốn đăng xuất không?",
                 "Xác nhận",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.QUESTION_MESSAGE
+                JOptionPane.YES_NO_OPTION
         );
 
         if (confirm == JOptionPane.YES_OPTION) {
-            // 1. Đóng MainView
             this.dispose();
-
-            // 2. Mở lại Login với Controller
             java.awt.EventQueue.invokeLater(() -> {
                 LoginView loginView = new LoginView();
-                new LoginController(loginView); // KÍCH HOẠT CONTROLLER TẠI ĐÂY
+                new LoginController(loginView);
                 loginView.setVisible(true);
             });
         }
     }
 
     // ======================
-    // CONTENT (CARD LAYOUT)
+    // CONTENT
     // ======================
     private void initContent() {
         cardLayout = new CardLayout();
         pnlContent = new JPanel(cardLayout);
 
-        // 1. Khởi tạo các View
         trangChuView  = new TrangChuView();
         datMonView    = new DatMonView();
         thucDonView   = new ThucDonView();
         nhanVienView  = new NhanVienView();
         khachHangView = new KhachHangView();
         hoaDonView    = new HoaDonView();
-        khoView       = new KhoView();
+//        khoView       = new KhoView();
         doanhThuView  = new DoanhThuView();
+        danhMucView = new DanhMucView();
+//        new DanhMucController(danhMucView);
 
-        // 2. Khởi tạo các Controller (QUAN TRỌNG: Phải khởi tạo thì mới load dữ liệu)
-        
-        // -- Các Controller độc lập --
         new TrangChuController(trangChuView);
         new DoanhThuController(doanhThuView);
-        new NhanVienController(nhanVienView);   
-        
+        new NhanVienController(nhanVienView);
 
-        // -- Các Controller có liên quan lẫn nhau (Cần đúng thứ tự) --
-        
-        // B1: Tạo Hóa Đơn & Kho trước
         HoaDonController hoaDonController = new HoaDonController(hoaDonView);
-        KhoController khoController = new KhoController(khoView);
+//        KhoController khoController = new KhoController(khoView);
         KhachHangController khachHangController = new KhachHangController(khachHangView);
-        
-        // B2: Tạo Đặt Món (Cần Hóa Đơn để xử lý thanh toán)
+
         DatMonController datMonController = new DatMonController(datMonView, hoaDonController);
-        datMonController.setKhoController(khoController);
+//        datMonController.setKhoController(khoController);
         datMonController.setKhachHangController(khachHangController);
-        // Gán Kho cho Đặt món để cập nhật lại kho sau khi bán
-        datMonController.setKhoController(khoController); 
 
-        // B3: Tạo Thực Đơn (Cần Đặt Món để reload lại menu khi thêm/sửa món)
         ThucDonController thucDonController = new ThucDonController(thucDonView, datMonController);
-        
-        // B4: Gán ngược lại Thực đơn cho Kho (để load ComboBox mã hàng)
-        khoController.setThucDonController(thucDonController);
-        
-        
-        
-        
+//        khoController.setThucDonController(thucDonController);
 
-        // 3. Thêm View vào Panel
+        DanhMucController danhMucController = new DanhMucController(danhMucView);
+        danhMucController.setThucDonController(thucDonController);
+        danhMucController.setDatMonController(datMonController);
+
+
         pnlContent.add(trangChuView,  "Trang chủ");
         pnlContent.add(datMonView,    "Đặt Món");
         pnlContent.add(thucDonView,   "Thực đơn");
         pnlContent.add(nhanVienView,  "Nhân viên");
         pnlContent.add(khachHangView, "Khách hàng");
         pnlContent.add(hoaDonView,    "Hóa đơn");
-        pnlContent.add(khoView,       "Kho");
+//        pnlContent.add(khoView,       "Kho");
         pnlContent.add(doanhThuView,  "Doanh thu");
+        pnlContent.add(danhMucView, "Danh mục");
 
         add(pnlContent, BorderLayout.CENTER);
     }
@@ -204,7 +193,7 @@ public class MainView extends JFrame {
 
         lblRole = new JLabel("ADMIN");
         lblRole.setForeground(Color.WHITE);
-        lblRole.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        lblRole.setFont(new Font("Segoe UI", Font.BOLD, 18));
         lblRole.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         pnlSidebar.add(Box.createRigidArea(new Dimension(0, 30)));
@@ -212,8 +201,8 @@ public class MainView extends JFrame {
         pnlSidebar.add(Box.createRigidArea(new Dimension(0, 30)));
 
         String[] menus = {
-                "Trang chủ", "Đặt Món", "Thực đơn", "Nhân viên",
-                "Khách hàng", "Hóa đơn", "Kho", "Doanh thu", "Thoát"
+                "Trang chủ", "Đặt Món", "Thực đơn","Danh mục", "Nhân viên",
+                "Khách hàng", "Hóa đơn", "Doanh thu", "Thoát"
         };
 
         for (String m : menus) {
@@ -233,7 +222,7 @@ public class MainView extends JFrame {
         JButton btn = new JButton(text);
         btn.setMaximumSize(new Dimension(230, 45));
         btn.setBackground(SIDEBAR_COLOR);
-        btn.setForeground(Color.WHITE);
+        btn.setForeground(TEXT_COLOR);
         btn.setFont(new Font("Segoe UI", Font.PLAIN, 15));
         btn.setBorderPainted(false);
         btn.setFocusPainted(false);
@@ -262,10 +251,15 @@ public class MainView extends JFrame {
 
         btn.addMouseListener(new MouseAdapter() {
             public void mouseEntered(MouseEvent e) {
-                btn.setBackground(HOVER_COLOR);
+                if (!btn.getBackground().equals(ACTIVE_COLOR)) {
+                    btn.setBackground(HOVER_COLOR);
+                }
             }
+
             public void mouseExited(MouseEvent e) {
-                btn.setBackground(SIDEBAR_COLOR);
+                if (!btn.getBackground().equals(ACTIVE_COLOR)) {
+                    btn.setBackground(SIDEBAR_COLOR);
+                }
             }
         });
 
@@ -278,9 +272,10 @@ public class MainView extends JFrame {
             case "Đặt Món"    -> "/CH/icons/fast-food.png";
             case "Thực đơn"   -> "/CH/icons/menu.png";
             case "Nhân viên"  -> "/CH/icons/employee.png";
+            case "Danh mục"   -> "/CH/icons/list.png";
             case "Khách hàng" -> "/CH/icons/rating.png";
             case "Hóa đơn"    -> "/CH/icons/invoice.png";
-            case "Kho"        -> "/CH/icons/warehouse.png";
+//            case "Kho"        -> "/CH/icons/warehouse.png";
             case "Doanh thu"  -> "/CH/icons/salary.png";
             case "Thoát"      -> "/CH/icons/exit.png";
             default -> null;
@@ -299,25 +294,28 @@ public class MainView extends JFrame {
 
     private void updateActiveButton(String active) {
         menuButtons.forEach((k, v) -> {
-            v.setForeground(k.equals(active) ? ACCENT_RED : Color.WHITE);
-            v.setFont(new Font("Segoe UI",
-                    k.equals(active) ? Font.BOLD : Font.PLAIN, 15));
-            v.setBackground(SIDEBAR_COLOR);
+            if (k.equals(active)) {
+                v.setBackground(ACTIVE_COLOR);
+                v.setFont(new Font("Segoe UI", Font.BOLD, 15));
+            } else {
+                v.setBackground(SIDEBAR_COLOR);
+                v.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+            }
+            v.setForeground(TEXT_COLOR);
         });
     }
 
-    // ======================
-    // PHÂN QUYỀN
-    // ======================
     public void setRole(String role) {
         lblRole.setText(role);
         if ("NHÂN VIÊN".equals(role)) {
             hideMenu("Nhân viên");
-            hideMenu("Kho");
+//            hideMenu("Kho");
             hideMenu("Doanh thu");
+            hideMenu("Danh mục");
         }
         if (role != null) {
-            lblUser.setText("Xin chào, " + role); 
+            lblUser.setText("Xin chào, " + Session.tenNV);
+            trangChuView.setUserInfo(role, role);
         }
     }
 

@@ -32,7 +32,7 @@ public class LoginView extends JFrame {
         card.setBorder(new EmptyBorder(20, 25, 20, 25));
         container.add(card);
 
-        JLabel lblTitle = new JLabel("HỆ THỐNG QUẢN LÝ CỬA HÀNG ĂN NHANH", SwingConstants.CENTER);
+        JLabel lblTitle = new JLabel("HỆ THỐNG QUẢN LÝ QUÁN COFFEE", SwingConstants.CENTER);
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
         lblTitle.setForeground(PRIMARY_COLOR);
         card.add(lblTitle, BorderLayout.NORTH);

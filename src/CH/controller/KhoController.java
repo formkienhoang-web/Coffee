@@ -17,6 +17,24 @@ public class KhoController {
     private KhoDAO dao;
     private ThucDonController thucDonController;
 
+    private String taoMaHH() {
+        ArrayList<Kho> list = dao.getAll();
+        int max = 0;
+
+        for (Kho k : list) {
+            String ma = k.getMaHH(); // ví dụ HH001
+            if (ma.startsWith("HH")) {
+                try {
+                    int so = Integer.parseInt(ma.substring(2));
+                    if (so > max) max = so;
+                } catch (Exception e) {
+                    // bỏ qua nếu lỗi format
+                }
+            }
+        }
+        return String.format("HH%02d", max + 1);
+    }
+
     public KhoController(KhoView view) {
         this.view = view;
         this.dao = new KhoDAO();
@@ -25,6 +43,7 @@ public class KhoController {
         this.view.getBtnThem().addActionListener(new AddListener());
         this.view.getBtnSua().addActionListener(new UpdateListener());
         this.view.getBtnXoa().addActionListener(new DeleteListener());
+        this.view.getBtnTimKiem().addActionListener(new SearchListener());
         
         this.view.getBtnReset().addActionListener(e -> clearForm());
         this.view.getKhoTable().addMouseListener(new MouseAdapter() {
@@ -33,15 +52,41 @@ public class KhoController {
                 fillDataFromTableToTextFields();
             }
         });
+        view.getTxtTimKiem().getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { search(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { search(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { search(); }
+
+            private void search() {
+                String keyword = view.getTxtTimKiem().getText().trim().toLowerCase();
+
+                DefaultTableModel model = view.getTableModel();
+                model.setRowCount(0);
+
+                // Nếu rỗng → load lại
+                if (keyword.isEmpty()) {
+                    loadDataToView();
+                    return;
+                }
+
+                ArrayList<Kho> list = dao.getAll();
+
+                for (Kho k : list) {
+                    if (k.getTenHH().toLowerCase().contains(keyword)) {
+                        model.addRow(k.toObjectArray());
+                    }
+                }
+            }
+        });
     }
     public void setThucDonController(ThucDonController thucDonController){
         this.thucDonController = thucDonController;
     }
-    private void updateThucDonSide() {
-        if (thucDonController != null) {
-            thucDonController.loadMaHHToComboBox();
-        }
-    }
+//    private void updateThucDonSide() {
+//        if (thucDonController != null) {
+//            thucDonController.loadMaHHToComboBox();
+//        }
+//    }
 
     // Tải dữ liệu từ DAO và hiển thị lên bảng
     public void loadDataToView() {
@@ -66,12 +111,12 @@ public class KhoController {
             view.getTxtMaHH().setEditable(false);
         }
     }
-    
+
     private void clearForm() {
-        view.getTxtMaHH().setText("");
+        view.getTxtMaHH().setText("Tự động sinh");
         view.getTxtTenHH().setText("");
         view.getTxtSoLuong().setText("");
-        view.getTxtMaHH().setEditable(true);
+        view.getTxtMaHH().setEditable(false);
     }
 
     // Hàm phụ trợ: Lấy dữ liệu từ Form -> tạo đối tượng Kho
@@ -80,8 +125,8 @@ public class KhoController {
         String ten = view.getTxtTenHH().getText().trim();
         
         // Kiểm tra rỗng
-        if (ma.isEmpty() || ten.isEmpty()) {
-            throw new Exception("Mã và Tên hàng hóa không được để trống!");
+        if (ten.isEmpty()) {
+            throw new Exception("Tên hàng hóa không được để trống!");
         }
 
         int sl = Integer.parseInt(view.getTxtSoLuong().getText().trim());
@@ -97,12 +142,15 @@ public class KhoController {
         @Override
         public void actionPerformed(ActionEvent e) {
             try {
+                String maTuDong = taoMaHH();
+                view.getTxtMaHH().setText(maTuDong);
+
                 Kho k = getModelFromForm();
                 if (dao.add(k)) {
                     JOptionPane.showMessageDialog(view, "Thêm hàng hóa thành công!");
                     loadDataToView();
                     clearForm();
-                    updateThucDonSide();
+//                    updateThucDonSide();
                 } else {
                     JOptionPane.showMessageDialog(view, "Thêm thất bại. Có thể trùng Mã HH!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
@@ -130,7 +178,7 @@ public class KhoController {
                     JOptionPane.showMessageDialog(view, "Cập nhật thành công!");
                     loadDataToView();
                     clearForm();
-                    updateThucDonSide();
+//                    updateThucDonSide();
                 } else {
                     JOptionPane.showMessageDialog(view, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 }
@@ -163,9 +211,32 @@ public class KhoController {
                     JOptionPane.showMessageDialog(view, "Xóa thành công!");
                     loadDataToView();
                     clearForm();
-                    updateThucDonSide();
+//                    updateThucDonSide();
                 } else {
                     JOptionPane.showMessageDialog(view, "Xóa thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }
+    }
+    private class SearchListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            String keyword = view.getTxtTimKiem().getText().trim().toLowerCase();
+
+            // Nếu ô tìm kiếm rỗng → load lại toàn bộ
+            if (keyword.isEmpty()) {
+                loadDataToView();
+                return;
+            }
+
+            DefaultTableModel model = view.getTableModel();
+            model.setRowCount(0);
+
+            ArrayList<Kho> list = dao.getAll();
+
+            for (Kho k : list) {
+                if (k.getTenHH().toLowerCase().contains(keyword)) {
+                    model.addRow(k.toObjectArray());
                 }
             }
         }

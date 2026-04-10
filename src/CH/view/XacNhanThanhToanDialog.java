@@ -55,7 +55,7 @@ public class XacNhanThanhToanDialog extends JDialog {
         
         btnXacNhanIn = new JButton("XÁC NHẬN & IN");
         btnXacNhanIn.setBackground(new Color(0, 100, 0));
-        btnXacNhanIn.setForeground(Color.WHITE);
+        btnXacNhanIn.setForeground(Color.BLACK);
         btnXacNhanIn.setFont(new Font("Arial", Font.BOLD, 14));
         btnXacNhanIn.setPreferredSize(new Dimension(100, 40));
         

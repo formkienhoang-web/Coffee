@@ -36,6 +36,16 @@ public class NhanVienView extends JPanel {
 
     private void initUI() {
         // 1. Form Area
+        JPanel pnlTitle = new JPanel();
+        pnlTitle.setBackground(TEAL_COLOR);
+
+        JLabel lblTitle = new JLabel("Thông tin Nhân viên");
+        lblTitle.setForeground(Color.WHITE);
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
+
+        pnlTitle.add(lblTitle);
+
+        add(pnlTitle, BorderLayout.NORTH);
         JPanel pnlForm = new JPanel(new GridBagLayout());
         pnlForm.setBackground(TEAL_COLOR);
         GridBagConstraints gbc = new GridBagConstraints();
@@ -99,26 +109,32 @@ public class NhanVienView extends JPanel {
         JPanel pnlTop = new JPanel(new BorderLayout());
         pnlTop.add(pnlForm, BorderLayout.CENTER);
         pnlTop.add(pnlButtons, BorderLayout.SOUTH);
-        add(pnlTop, BorderLayout.NORTH);
+
 
         // Search Panel
         JPanel pnlSearch = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         pnlSearch.setBackground(TEAL_COLOR);
         txtTimKiem = new JTextField(15);
         btnTimKiem = createStyledButton("Tìm kiếm");
-        JLabel lblSearch = new JLabel("Tên NV: "); lblSearch.setForeground(Color.WHITE);
-        pnlSearch.add(lblSearch); pnlSearch.add(txtTimKiem); pnlSearch.add(btnTimKiem);
-        pnlButtons.add(pnlSearch); 
+        JLabel lblSearch = new JLabel("Tìm kiếm theo tên NV: "); lblSearch.setForeground(Color.WHITE);
+        pnlSearch.add(lblSearch); pnlSearch.add(txtTimKiem);
+        pnlButtons.add(pnlSearch);
         
         // Table
-        String[] columnNames = {"Mã NV", "Tên NV", "Ngày sinh", "Giới tính", "Chức vụ", "SĐT", "Địa chỉ", "Tài khoản", "Quyền"};
+        String[] columnNames = {"Mã NV", "Tên Nhân Viên", "Ngày sinh", "Giới tính", "Chức vụ", "SĐT", "Địa chỉ", "Tài khoản", "Quyền"};
         tableModel = new DefaultTableModel(columnNames, 0);
         tableNhanVien = new JTable(tableModel);
         tableNhanVien.setRowHeight(25);
         tableNhanVien.getTableHeader().setBackground(new Color(230, 230, 230));
         tableNhanVien.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
         JScrollPane scrollPane = new JScrollPane(tableNhanVien);
-        add(scrollPane, BorderLayout.CENTER);
+
+// panel chứa form + table
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.add(pnlTop, BorderLayout.NORTH);
+        mainPanel.add(scrollPane, BorderLayout.CENTER);
+
+        add(mainPanel, BorderLayout.CENTER);
     }
 
     private void addFormRow(JPanel panel, GridBagConstraints gbc, int x, int y, String labelText, Component field) {

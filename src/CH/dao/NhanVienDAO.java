@@ -149,26 +149,29 @@ public class NhanVienDAO {
         return newID;
     }
 
-    public String login(String username, String password) { // Tham số là username, password
-        String role = null;
-        String sql = "SELECT Role FROM NhanVien WHERE Username=? AND Password=?";
+    public NhanVien loginNV(String username, String password) {
         try {
-            Connection cons = DBConnection.getConnection();
-            PreparedStatement ps = cons.prepareStatement(sql);
-            // SỬA LẠI TÊN BIẾN CHO KHỚP VỚI THAM SỐ
-            ps.setString(1, username); 
+            Connection conn = DBConnection.getConnection();
+            String sql = "SELECT * FROM NhanVien WHERE Username=? AND Password=?";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, username);
             ps.setString(2, password);
-            
+
             ResultSet rs = ps.executeQuery();
+
             if (rs.next()) {
-                role = rs.getString("Role");
+                NhanVien nv = new NhanVien();
+                nv.setMaNV(rs.getString("MaNV"));
+                nv.setTenNV(rs.getString("TenNV"));
+                nv.setUsername(rs.getString("Username"));
+                nv.setRole(rs.getString("Role"));
+                return nv;
             }
-            ps.close();
-            cons.close();
+
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return role;
+        return null;
     }
     // Thêm vào NhanVienDAO
     public List<NhanVien> search(String keyword) {

@@ -46,6 +46,9 @@ public class KhoView extends JPanel {
         // Hàng 1
         addLabel(inputPanel, "Mã Hàng Hóa:", 0, 0, gbc);
         txtMaHH = createTextField();
+        txtMaHH.setEditable(false);
+        txtMaHH.setBackground(new Color(230, 230, 230));
+        txtMaHH.setText("Tự động sinh");
         addComponent(inputPanel, txtMaHH, 1, 0, gbc);
         
         addLabel(inputPanel, "Tên Hàng Hóa:", 2, 0, gbc); // Cột 2
@@ -76,10 +79,13 @@ public class KhoView extends JPanel {
         // 1.4 Panel Tìm kiếm (Nằm bên phải các nút)
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         searchPanel.setBackground(PRIMARY_COLOR);
+        JLabel lblTimKiem = new JLabel("Tên HH:");
+        lblTimKiem.setForeground(TEXT_COLOR);
         txtTimKiem = new JTextField(15);
         txtTimKiem.setPreferredSize(new Dimension(150, 30));
         btnTimKiem = createButton("Tìm Kiếm");
-        
+
+        searchPanel.add(lblTimKiem);
         searchPanel.add(txtTimKiem);
         searchPanel.add(btnTimKiem);
 

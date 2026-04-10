@@ -5,23 +5,24 @@ public class MonAn {
     private String tenMon;
     private double donGia;
     private String donViTinh;
-    private String maHH;    
     private String hinhAnh;
+    private String tenDanhMuc;
 
     public MonAn() {
     }
 
-    // Constructor ĐẦY ĐỦ cả MaHH và HinhAnh
-    public MonAn(String maMon, String tenMon, double donGia, String donViTinh, String maHH, String hinhAnh) {
+    // ✅ Constructor KHÔNG còn maHH
+    public MonAn(String maMon, String tenMon, double donGia,
+                 String donViTinh, String hinhAnh, String tenDanhMuc) {
         this.maMon = maMon;
         this.tenMon = tenMon;
         this.donGia = donGia;
         this.donViTinh = donViTinh;
-        this.maHH = maHH;
         this.hinhAnh = hinhAnh;
+        this.tenDanhMuc = tenDanhMuc;
     }
 
-    // --- GETTERS VÀ SETTERS ---
+    // --- GETTERS & SETTERS ---
     public String getMaMon() { return maMon; }
     public void setMaMon(String maMon) { this.maMon = maMon; }
 
@@ -34,14 +35,21 @@ public class MonAn {
     public String getDonViTinh() { return donViTinh; }
     public void setDonViTinh(String donViTinh) { this.donViTinh = donViTinh; }
 
-    public String getMaHH() { return maHH; }
-    public void setMaHH(String maHH) { this.maHH = maHH; }
-
     public String getHinhAnh() { return hinhAnh; }
     public void setHinhAnh(String hinhAnh) { this.hinhAnh = hinhAnh; }
 
-    // Chuyển đổi sang mảng Object để hiển thị lên JTable (Hiển thị cả MaHH cho dễ quản lý)
+    public String getTenDanhMuc() { return tenDanhMuc; }
+    public void setTenDanhMuc(String tenDanhMuc) { this.tenDanhMuc = tenDanhMuc; }
+
+    // ✅ Không còn maHH trong bảng
     public Object[] toObjectArray() {
-        return new Object[]{maMon, tenMon, String.format("%,.0f", donGia), donViTinh, maHH, hinhAnh};
+        return new Object[]{
+                maMon,
+                tenMon,
+                String.format("%,.0f", donGia),
+                donViTinh,
+                tenDanhMuc,
+                hinhAnh
+        };
     }
 }

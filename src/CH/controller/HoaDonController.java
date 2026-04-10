@@ -24,7 +24,7 @@ public class HoaDonController {
 
         loadData();
 
-        view.addThemListener(new AddListener());
+//        view.addThemListener(new AddListener());
         view.addSuaListener(new EditListener());
         view.addXoaListener(new DeleteListener());
         view.addResetListener(e -> view.clearForm());

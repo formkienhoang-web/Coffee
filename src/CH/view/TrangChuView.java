@@ -1,5 +1,7 @@
 package CH.view;
 
+import CH.model.Session;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -78,7 +80,7 @@ public class TrangChuView extends JPanel {
         lblDate.setForeground(TEXT_COLOR);
         lblDate.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        lblRole = new JLabel("Vai trò: ADMIN");
+        lblRole = new JLabel("Vai trò: ");
         lblRole.setFont(new Font("Segoe UI", Font.PLAIN, 20));
         lblRole.setForeground(TEXT_COLOR);
         lblRole.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -166,7 +168,7 @@ public class TrangChuView extends JPanel {
 
     // --- CẬP NHẬT USER INFO ĐỘNG ---
     public void setUserInfo(String username, String role) {
-        lblGreeting.setText(" Chào " + username + "!");
+        lblGreeting.setText(" Chào " + Session.tenNV + "!");
         lblRole.setText("Vai trò: " + role.toUpperCase());
     }
 

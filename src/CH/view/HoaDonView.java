@@ -79,12 +79,12 @@ public class HoaDonView extends JPanel {
         pnlCRUD.setBackground(TEAL_COLOR);
         pnlCRUD.setBorder(new EmptyBorder(5, 0, 0, 0));
 
-        btnThem = createStyledButton("Thêm");
+//        btnThem = createStyledButton("Thêm");
         btnSua = createStyledButton("Sửa");
         btnXoa = createStyledButton("Xóa");
         btnReset = createStyledButton("Reset");
 
-        pnlCRUD.add(btnThem); pnlCRUD.add(btnSua); pnlCRUD.add(btnXoa); pnlCRUD.add(btnReset);
+//         pnlCRUD.add(btnSua); pnlCRUD.add(btnXoa); pnlCRUD.add(btnReset);
         pnlLeft.add(pnlCRUD, BorderLayout.SOUTH);
 
         // B. RIGHT SIDE: Nút Xem chi tiết
@@ -191,7 +191,7 @@ public class HoaDonView extends JPanel {
     
     // Listeners
     public void addXemChiTietListener(ActionListener al) { btnXemChiTiet.addActionListener(al); }
-    public void addThemListener(ActionListener al) { btnThem.addActionListener(al); }
+//    public void addThemListener(ActionListener al) { btnThem.addActionListener(al); }
     public void addSuaListener(ActionListener al) { btnSua.addActionListener(al); }
     public void addXoaListener(ActionListener al) { btnXoa.addActionListener(al); }
     public void addResetListener(ActionListener al) { btnReset.addActionListener(al); }
