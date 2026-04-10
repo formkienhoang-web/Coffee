@@ -47,6 +47,7 @@ public class HoaDonDAO {
             while (rs.next()) {
                 ChiTietHoaDon ct = new ChiTietHoaDon(
                     rs.getString("TenMon"),
+                    rs.getString("Size"),
                     rs.getInt("SoLuong"),
                     rs.getDouble("DonGia")
                 );
@@ -126,13 +127,24 @@ public class HoaDonDAO {
             ResultSet rs = cons.createStatement().executeQuery("SELECT COUNT(*) FROM HoaDon");
             if (rs.next() && rs.getInt(1) == 0) {
                 // Thêm Hóa đơn 1
-                cons.createStatement().executeUpdate("INSERT INTO HoaDon VALUES ('HD001', 'Nguyễn Văn A', 'Trần Thị B', '01/12/2025', 130000)");
-                cons.createStatement().executeUpdate("INSERT INTO ChiTietHoaDon(MaHD, TenMon, SoLuong, DonGia) VALUES ('HD001', 'Gà rán', 2, 35000)");
-                cons.createStatement().executeUpdate("INSERT INTO ChiTietHoaDon(MaHD, TenMon, SoLuong, DonGia) VALUES ('HD001', 'Khoai tây chiên', 1, 60000)");
-                
-                // Thêm Hóa đơn 2
-                cons.createStatement().executeUpdate("INSERT INTO HoaDon VALUES ('HD002', 'Lê Văn C', 'Khách vãng lai', '02/12/2025', 20000)");
-                cons.createStatement().executeUpdate("INSERT INTO ChiTietHoaDon(MaHD, TenMon, SoLuong, DonGia) VALUES ('HD002', 'Pepsi', 2, 10000)");
+                cons.createStatement().executeUpdate(
+                        "INSERT INTO HoaDon VALUES ('HD001', 'Nguyễn Văn A', 'Trần Thị B', '01/12/2025', 130000)"
+                );
+
+                cons.createStatement().executeUpdate(
+                        "INSERT INTO HoaDon VALUES ('HD002', 'Lê Văn C', 'Khách vãng lai', '02/12/2025', 20000)"
+                );
+                cons.createStatement().executeUpdate(
+                        "INSERT INTO ChiTietHoaDon(MaHD, TenMon, Size, SoLuong, DonGia) VALUES ('HD001', 'Gà rán', 'S', 2, 35000)"
+                );
+
+                cons.createStatement().executeUpdate(
+                        "INSERT INTO ChiTietHoaDon(MaHD, TenMon, Size, SoLuong, DonGia) VALUES ('HD001', 'Khoai tây chiên', 'M', 1, 60000)"
+                );
+
+                cons.createStatement().executeUpdate(
+                        "INSERT INTO ChiTietHoaDon(MaHD, TenMon, Size, SoLuong, DonGia) VALUES ('HD002', 'Pepsi', 'S', 2, 10000)"
+                );
                 
                 System.out.println("Đã thêm dữ liệu mẫu cho Hóa đơn.");
             }

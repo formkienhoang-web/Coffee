@@ -25,12 +25,86 @@ public class DatMonView extends JPanel {
     private JComboBox<String> cbDanhMuc;
     private JTextField txtSearch;
 
+    class SizeEditor extends AbstractCellEditor implements TableCellEditor {
+        private JComboBox<String> combo = new JComboBox<>(new String[]{"S", "M", "L"});
+        private JTable table;
+        private DefaultTableModel model;
 
+        public SizeEditor(JTable table, DefaultTableModel model) {
+            this.table = table;
+            this.model = model;
+
+            combo.addActionListener(e -> {
+                int row = table.getEditingRow();
+                if (row >= 0) update(row);
+            });
+        }
+
+        private void update(int row) {
+            try {
+                String size = combo.getSelectedItem().toString();
+
+                double giaChuan = Double.parseDouble(model.getValueAt(row, 5).toString());
+
+                double gia = switch (size) {
+                    case "M" -> giaChuan + 10000;
+                    case "L" -> giaChuan + 20000;
+                    default -> giaChuan;
+                };
+
+                int sl = Integer.parseInt(model.getValueAt(row, 2).toString());
+
+                model.setValueAt(size, row, 1); // 🔥 FIX QUAN TRỌNG
+                model.setValueAt(String.format("%,.0f", gia), row, 3);
+                model.setValueAt(String.format("%,.0f", gia * sl), row, 4);
+
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+            return combo.getSelectedItem();
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value,
+                                                     boolean isSelected, int row, int column) {
+            combo.setSelectedItem(value);
+            return combo;
+        }
+    }
+    // 🔥 FIX SPINNER REALTIME
     class SpinnerEditor extends AbstractCellEditor implements TableCellEditor {
         private final JSpinner spinner;
+        private JTable table;
+        private DefaultTableModel model;
 
-        public SpinnerEditor() {
+        public SpinnerEditor(JTable table, DefaultTableModel model) {
+            this.table = table;
+            this.model = model;
+
             spinner = new JSpinner(new SpinnerNumberModel(1, 1, 100, 1));
+
+            // 🔥 REALTIME UPDATE
+            spinner.addChangeListener(e -> {
+                int row = table.getEditingRow();
+                if (row >= 0) {
+                    try {
+                        int sl = (int) spinner.getValue();
+                        double gia = Double.parseDouble(
+                                model.getValueAt(row, 3).toString().replace(",", "")
+                        );
+
+                        double thanhTien = sl * gia;
+
+                        model.setValueAt(sl, row, 2);
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            });
         }
 
         @Override
@@ -90,11 +164,11 @@ public class DatMonView extends JPanel {
         JPanel pnlRight = new JPanel(new BorderLayout());
         pnlRight.setBorder(new TitledBorder("GIỎ HÀNG"));
 
-        String[] colGio = {"Mã món", "Tên món", "SL", "Đơn giá", "Thành tiền"};
+        String[] colGio = { "Tên món", "Size", "SL", "Đơn giá", "Thành tiền", "Giá gốc"};
         modelGioHang = new DefaultTableModel(colGio, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return column == 2;
+                return column == 1 || column == 2;
             }
 
             @Override
@@ -105,9 +179,19 @@ public class DatMonView extends JPanel {
         };
 
         tableGioHang = new JTable(modelGioHang);
-        tableGioHang.getColumnModel().getColumn(2).setCellEditor(new SpinnerEditor());
+
+        // 🔥 FIX: truyền table + model vào
+        tableGioHang.getColumnModel().getColumn(1)
+                .setCellEditor(new SizeEditor(tableGioHang, modelGioHang));
+        tableGioHang.getColumnModel().getColumn(2)
+                .setCellEditor(new SpinnerEditor(tableGioHang, modelGioHang));
+        tableGioHang.removeColumn(tableGioHang.getColumnModel().getColumn(5));
+        tableGioHang.setSurrendersFocusOnKeystroke(true);
+        tableGioHang.setCellSelectionEnabled(true);
+        tableGioHang.putClientProperty("terminateEditOnFocusLost", true);
         tableGioHang.setRowHeight(30);
 
+        // (Giữ nguyên listener cũ - vẫn OK)
         modelGioHang.addTableModelListener(e -> {
             int row = e.getFirstRow();
             int col = e.getColumn();
@@ -119,6 +203,8 @@ public class DatMonView extends JPanel {
 
                     double thanhTien = sl * gia;
                     modelGioHang.setValueAt(String.format("%,.0f", thanhTien), row, 4);
+
+                    updateTongTien(); // 🔥 thêm dòng này
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -153,6 +239,17 @@ public class DatMonView extends JPanel {
 
         add(pnlLeft);
         add(pnlRight);
+    }
+
+    // 🔥 THÊM HÀM TÍNH TỔNG TIỀN
+    private void updateTongTien() {
+        double tong = 0;
+        for (int i = 0; i < modelGioHang.getRowCount(); i++) {
+            tong += Double.parseDouble(
+                    modelGioHang.getValueAt(i, 4).toString().replace(",", "")
+            );
+        }
+        setTongTien(tong);
     }
 
     // ================= MENU CARD =================
@@ -222,23 +319,42 @@ public class DatMonView extends JPanel {
 
     // ================= GIỎ HÀNG =================
     public void addMonToGio(String maMon, String ten, double gia) {
+
+        String sizeMacDinh = "S";
+
         for (int i = 0; i < modelGioHang.getRowCount(); i++) {
-            if (modelGioHang.getValueAt(i, 0).equals(maMon)) {
+
+            String tenTrongBang = modelGioHang.getValueAt(i, 0).toString();
+            String sizeTrongBang = modelGioHang.getValueAt(i, 1).toString();
+
+            // 🔥 FIX CHÍNH Ở ĐÂY
+            if (tenTrongBang.equals(ten) && sizeTrongBang.equals(sizeMacDinh)) {
+
                 int sl = Integer.parseInt(modelGioHang.getValueAt(i, 2).toString());
                 int slMoi = sl + 1;
 
                 modelGioHang.setValueAt(slMoi, i, 2);
-                modelGioHang.setValueAt(String.format("%,.0f", slMoi * gia), i, 4);
-                return;
+
+                double giaHienTai = Double.parseDouble(
+                        modelGioHang.getValueAt(i, 3).toString().replace(",", "")
+                );
+
+                modelGioHang.setValueAt(
+                        String.format("%,.0f", slMoi * giaHienTai), i, 4
+                );
+
+                return; // 🔥 QUAN TRỌNG: dừng luôn
             }
         }
 
+        // chưa có thì thêm mới
         modelGioHang.addRow(new Object[]{
-                maMon,
                 ten,
+                sizeMacDinh,
                 1,
                 String.format("%,.0f", gia),
-                String.format("%,.0f", gia)
+                String.format("%,.0f", gia),
+                gia
         });
     }
 }

@@ -57,13 +57,20 @@ public class DatMonController {
 
         cb.setSelectedIndex(0);
     }
+    private String removeAccent(String text) {
+        if (text == null) return "";
+        return java.text.Normalizer
+                .normalize(text, java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .toLowerCase();
+    }
     // ================= LOAD MENU CARD =================
     public void loadMenu() {
         view.clearMenu();
 
         List<MonAn> list = menuDao.getAll();
 
-        String keyword = view.getTxtSearch().getText().trim().toLowerCase();
+        String keyword = view.getTxtSearch().getText().trim();
         String danhMuc = view.getCbDanhMuc().getSelectedItem() != null
                 ? view.getCbDanhMuc().getSelectedItem().toString()
                 : "Danh mục";
@@ -71,7 +78,9 @@ public class DatMonController {
         for (MonAn m : list) {
 
             // 🔍 LỌC THEO TÊN
-            boolean matchName = m.getTenMon().toLowerCase().contains(keyword);
+            boolean matchName =
+                    removeAccent(m.getTenMon())
+                            .contains(removeAccent(keyword));
 
             // 📂 LỌC THEO DANH MỤC
             boolean matchDanhMuc =
@@ -166,13 +175,14 @@ public class DatMonController {
             psHD.executeUpdate();
 
             // 🔥 LƯU CHI TIẾT
-            String sql = "INSERT INTO ChiTietHoaDon(MaHD, TenMon, SoLuong, DonGia) VALUES (?, ?, ?, ?)";
+            String sql = "INSERT INTO ChiTietHoaDon(MaHD, TenMon, Size, SoLuong, DonGia) VALUES (?, ?, ?, ?, ?)";
             java.sql.PreparedStatement ps = conn.prepareStatement(sql);
 
             DefaultTableModel model = view.getModelGioHang();
 
             for (int i = 0; i < model.getRowCount(); i++) {
-                String tenMon = model.getValueAt(i, 1).toString();
+                String tenMon = model.getValueAt(i, 0).toString();
+                String size = model.getValueAt(i, 1).toString();
                 int soLuong = Integer.parseInt(model.getValueAt(i, 2).toString());
                 double donGia = Double.parseDouble(
                         model.getValueAt(i, 3).toString().replace(",", "")
@@ -180,8 +190,9 @@ public class DatMonController {
 
                 ps.setString(1, maHD);
                 ps.setString(2, tenMon);
-                ps.setInt(3, soLuong);
-                ps.setDouble(4, donGia);
+                ps.setString(3, size);
+                ps.setInt(4, soLuong);
+                ps.setDouble(5, donGia);
                 ps.executeUpdate();
             }
 
