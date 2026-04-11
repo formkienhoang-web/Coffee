@@ -5,22 +5,74 @@ import CH.dao.ThucDonDAO;
 import CH.model.MonAn;
 import CH.view.ThucDonView;
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import java.text.Normalizer;
+import java.util.regex.Pattern;
 
 public class ThucDonController {
     private ThucDonView view;
     private ThucDonDAO dao;
     private DatMonController datMonController;
+    private DanhMucDAO danhMucDAO = new DanhMucDAO();
+    private String currentMaMon = null;
+
+    private boolean isEdit = false; // 🔥 phân biệt thêm / sửa
 
     public ThucDonController(ThucDonView view, DatMonController datMonController) {
         this.view = view;
         this.dao = new ThucDonDAO();
         this.datMonController = datMonController;
 
-        loadData();
+        loadData("");
         loadDanhMucToComboBox();
 
-        // ===== THÊM =====
+        // ===== SEARCH =====
+        view.getTxtSearch().getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) { search(); }
+            public void removeUpdate(DocumentEvent e) { search(); }
+            public void changedUpdate(DocumentEvent e) { search(); }
+
+            private void search() {
+                String keyword = view.getTxtSearch().getText();
+                if (keyword.contains("🔍")) loadData("");
+                else loadData(keyword.trim());
+            }
+        });
+
+        // ===== THÊM (CHỈ MỞ FORM) =====
         view.addThemListener(e -> {
+            isEdit = false;
+            view.clearForm();
+            view.getDialogForm().setTitle("Thêm món mới");
+            view.getDialogForm().setLocationRelativeTo(null);
+            view.getDialogForm().setVisible(true);
+        });
+
+        // ===== SỬA (MỞ FORM + LOAD DATA) =====
+        view.addSuaListener(e -> {
+            int row = view.getSelectedRow();
+            if (row < 0) {
+                JOptionPane.showMessageDialog(view, "Vui lòng chọn món để sửa!");
+                return;
+            }
+
+            isEdit = true;
+
+            String ma = view.getTable().getValueAt(row, 0).toString();
+            currentMaMon = ma; // 🔥 LƯU ID
+
+            MonAn m = dao.getByID(ma);
+            if (m != null) {
+                view.fillForm(m);
+                view.getDialogForm().setTitle("Chỉnh sửa món");
+                view.getDialogForm().setLocationRelativeTo(null);
+                view.getDialogForm().setVisible(true);
+            }
+        });
+
+        // ===== NÚT LƯU (XỬ LÝ CHÍNH) =====
+        view.getBtnLuu().addActionListener(e -> {
             MonAn m = view.getMonAnInfo();
 
             if (m.getTenMon().isEmpty()) {
@@ -28,30 +80,28 @@ public class ThucDonController {
                 return;
             }
 
-            m.setMaMon(dao.getNewID());
+            boolean success;
 
-            if (dao.add(m)) {
-                reload();
-                JOptionPane.showMessageDialog(view, "Thêm thành công!");
+            if (isEdit) {
+                // 🔥 DÙNG ID ĐÃ LƯU
+                m.setMaMon(currentMaMon);
+
+                success = dao.update(m);
+
+                if (success) JOptionPane.showMessageDialog(view, "Sửa thành công!");
+                else JOptionPane.showMessageDialog(view, "Sửa thất bại!");
             } else {
-                JOptionPane.showMessageDialog(view, "Thêm thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-            }
-        });
+                m.setMaMon(dao.getNewID());
+                success = dao.add(m);
 
-        // ===== SỬA =====
-        view.addSuaListener(e -> {
-            int row = view.getSelectedRow();
-            if (row < 0) {
-                JOptionPane.showMessageDialog(view, "Chọn món cần sửa!");
-                return;
+                if (success) JOptionPane.showMessageDialog(view, "Thêm thành công!");
+                else JOptionPane.showMessageDialog(view, "Thêm thất bại!");
             }
-            if (view.getSelectedRow() < 0) return;
 
-            if (dao.update(view.getMonAnInfo())) {
+            if (success) {
                 reload();
-                JOptionPane.showMessageDialog(view, "Sửa thành công!");
-            } else {
-                JOptionPane.showMessageDialog(view, "Sửa thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                view.getDialogForm().setVisible(false);
+                currentMaMon = null; // reset
             }
         });
 
@@ -62,20 +112,18 @@ public class ThucDonController {
                 JOptionPane.showMessageDialog(view, "Chọn món cần xoá!");
                 return;
             }
-            if (view.getSelectedRow() < 0) return;
 
-            String ma = view.getMonAnInfo().getMaMon();
+            String ma = view.getTable().getValueAt(row, 0).toString();
 
-            if (JOptionPane.showConfirmDialog(view, "Xóa " + ma + "?") == JOptionPane.YES_OPTION) {
+            if (JOptionPane.showConfirmDialog(view, "Xóa món " + ma + "?", "Xác nhận",
+                    JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+
                 if (dao.delete(ma)) {
-                    reload();
+                    reload(); // 🔥 cập nhật bên đặt món luôn
                     JOptionPane.showMessageDialog(view, "Xóa thành công!");
                 }
             }
         });
-
-        // ===== RESET =====
-        view.addResetListener(e -> view.clearForm());
 
         // ===== CLICK TABLE =====
         view.getTable().getSelectionModel().addListSelectionListener(e -> {
@@ -83,27 +131,8 @@ public class ThucDonController {
                 int r = view.getSelectedRow();
                 try {
                     String ma = view.getTable().getValueAt(r, 0).toString();
-                    String ten = view.getTable().getValueAt(r, 1).toString();
-                    String giaStr = view.getTable().getValueAt(r, 2).toString().replace(",", "");
-                    String dvt = view.getTable().getValueAt(r, 3).toString();
-
-                    String danhMuc = view.getTable().getValueAt(r, 4) != null
-                            ? view.getTable().getValueAt(r, 4).toString()
-                            : "";
-
-                    String hinhAnh = view.getTable().getValueAt(r, 5) != null
-                            ? view.getTable().getValueAt(r, 5).toString()
-                            : "";
-
-                    view.fillForm(new MonAn(
-                            ma,
-                            ten,
-                            Double.parseDouble(giaStr),
-                            dvt,
-                            hinhAnh,
-                            danhMuc
-                    ));
-
+                    MonAn m = dao.getByID(ma);
+                    if (m != null) view.fillForm(m);
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -111,32 +140,42 @@ public class ThucDonController {
         });
     }
 
-    private DanhMucDAO danhMucDAO = new DanhMucDAO();
+    // ===== REMOVE ACCENT =====
+    private String removeAccent(String s) {
+        String temp = Normalizer.normalize(s, Normalizer.Form.NFD);
+        Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+        return pattern.matcher(temp).replaceAll("").replace('đ', 'd').replace('Đ', 'D');
+    }
 
+    // ===== LOAD DANH MỤC =====
     public void loadDanhMucToComboBox() {
         JComboBox<String> cbo = view.getCboDanhMuc();
-
         cbo.removeAllItems();
-        cbo.addItem(""); // mặc định trống
-
+        cbo.addItem("");
         for (String[] dm : danhMucDAO.getAll()) {
             cbo.addItem(dm[1]);
         }
-
-        cbo.setSelectedIndex(0);
     }
 
-    private void loadData() {
+    // ===== LOAD DATA =====
+    private void loadData(String keyword) {
         view.clearTable();
+        String searchKey = removeAccent(keyword.toLowerCase());
+
         for (MonAn m : dao.getAll()) {
-            view.addRow(m);
+            String tenMonKoDau = removeAccent(m.getTenMon().toLowerCase());
+            if (searchKey.isEmpty() || tenMonKoDau.contains(searchKey)) {
+                view.addRow(m);
+            }
         }
     }
 
+    // ===== RELOAD (QUAN TRỌNG) =====
     private void reload() {
-        loadData();
+        loadData("");
         view.clearForm();
 
+        // 🔥 CẬP NHẬT BÊN ĐẶT MÓN
         if (datMonController != null) {
             datMonController.loadMenu();
         }

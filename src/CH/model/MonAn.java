@@ -7,7 +7,7 @@ public class MonAn {
     private String donViTinh;
     private String hinhAnh;
     private String tenDanhMuc;
-
+    private String maDanhMuc;   // lưu ID
     public MonAn() {
     }
 

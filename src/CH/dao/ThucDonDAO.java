@@ -151,4 +151,32 @@ public class ThucDonDAO {
         }
         return count;
     }
+    // 7. Lấy một món ăn theo mã (Dùng để hiển thị ảnh chính xác khi click bảng)
+    public MonAn getByID(String ma) {
+        MonAn mon = null;
+        try {
+            Connection cons = DBConnection.getConnection();
+            String sql = "SELECT MaMon, TenMon, DonGia, DonViTinh, TenDanhMuc, HinhAnh FROM ThucDon WHERE MaMon = ?";
+            PreparedStatement ps = cons.prepareStatement(sql);
+            ps.setString(1, ma);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                mon = new MonAn(
+                        rs.getString("MaMon"),
+                        rs.getString("TenMon"),
+                        rs.getDouble("DonGia"),
+                        rs.getString("DonViTinh"),
+                        rs.getString("HinhAnh"),
+                        rs.getString("TenDanhMuc")
+                );
+            }
+
+            ps.close();
+            cons.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return mon;
+    }
 }

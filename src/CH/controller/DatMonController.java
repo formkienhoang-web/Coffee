@@ -5,6 +5,7 @@ import CH.model.*;
 import CH.view.*;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import java.sql.PreparedStatement;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -109,6 +110,9 @@ public class DatMonController {
         if (row >= 0) {
             ((DefaultTableModel)view.getTableGioHang().getModel()).removeRow(row);
             updateTongTien();
+        }else {
+            JOptionPane.showMessageDialog(view, "Chọn món cần xoá!");
+            return;
         }
     }
 
@@ -138,13 +142,14 @@ public class DatMonController {
 
         dialog.addXacNhanListener(e -> {
             String tenKhach = dialog.getTenKhach();
+            String sdt = dialog.getSDT();
 
             if (tenKhach.isEmpty()) {
                 JOptionPane.showMessageDialog(dialog, "Nhập tên khách!");
                 return;
             }
 
-            luuHoaDonVaoDB(tenKhach);
+            luuHoaDonVaoDB(tenKhach,sdt);
             dialog.dispose();
         });
 
@@ -152,12 +157,49 @@ public class DatMonController {
     }
 
     // ================= LƯU DB (FIX CHUẨN) =================
-    private void luuHoaDonVaoDB(String tenKhach) {
+    private void luuHoaDonVaoDB(String tenKhach, String sdt) {
         java.sql.Connection conn = null;
 
         try {
             conn = DBConnection.getConnection();
             conn.setAutoCommit(false);
+            // 1. LOGIC TỰ ĐỘNG LƯU KHÁCH HÀNG
+            // =================================================================
+            String maKH = null;
+
+            if (!sdt.isEmpty()) {
+                // A. Kiểm tra xem SĐT này đã có chưa
+                String sqlCheck = "SELECT MaKH, TenKH FROM KhachHang WHERE SoDienThoai = ?";
+                PreparedStatement psCheck = conn.prepareStatement(sqlCheck);
+                psCheck.setString(1, sdt);
+                java.sql.ResultSet rsCheck = psCheck.executeQuery();
+
+                if (rsCheck.next()) {
+                    // Đã tồn tại -> Lấy MaKH cũ
+                    maKH = rsCheck.getString("MaKH");
+                    // (Tùy chọn: Có thể cập nhật lại tên khách nếu muốn)
+                } else {
+                    // Chưa tồn tại -> Thêm mới vào bảng KhachHang
+
+                    // Sinh mã KH mới (Gọi DAO hoặc tự sinh trong transaction)
+                    // Ở đây gọi DAO để lấy ID mới nhất cho an toàn
+                    String newMaKH = new KhachHangDAO().getNewID();
+
+                    String sqlInsertKH = "INSERT INTO KhachHang(MaKH, TenKH, TheLoai, GioiTinh, Email, SoDienThoai, DiaChi) " +
+                            "VALUES (?, ?, ?, ?, ?, ?, ?)";
+                    PreparedStatement psKH = conn.prepareStatement(sqlInsertKH);
+                    psKH.setString(1, newMaKH);
+                    psKH.setString(2, tenKhach);
+                    psKH.setString(3, "Vãng lai"); // Mặc định
+                    psKH.setString(4, "Khác");     // Mặc định
+                    psKH.setString(5, "");         // Email trống
+                    psKH.setString(6, sdt);
+                    psKH.setString(7, "");         // Địa chỉ trống
+
+                    psKH.executeUpdate();
+                    maKH = newMaKH;
+                }
+            }
 
             String maHD = hoaDonDao.getNewID();
             String ngayLap = new SimpleDateFormat("dd/MM/yyyy").format(new Date());
@@ -204,7 +246,7 @@ public class DatMonController {
             updateTongTien();
 
             if (hoaDonController != null) hoaDonController.loadData();
-            if (khachHangController != null) khachHangController.loadDataToView();
+            if (khachHangController != null) khachHangController.loadData();
 
         } catch (Exception ex) {
             try { if (conn != null) conn.rollback(); } catch (Exception e) {}

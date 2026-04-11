@@ -1,269 +1,476 @@
 package CH.view;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
-import javax.swing.table.DefaultTableModel;
+import javax.swing.border.*;
+import javax.swing.table.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.io.File;
-import javax.swing.filechooser.FileNameExtensionFilter;
+import java.awt.event.*;
 import CH.model.MonAn;
 
 public class ThucDonView extends JPanel {
-    private JTextField txtMaMon, txtTenMon, txtDonGia, txtDVT;
-
-    // ❌ ĐÃ BỎ cboMaHH
+    private JTextField txtMaMon, txtTenMon, txtDonGia, txtDVT, txtSearch;
     private JComboBox<String> cboDanhMuc;
-
     private JLabel lblHinhAnh;
-    private JButton btnChonAnh;
+    private JButton btnChonAnh, btnThem, btnSua, btnXoa, btnReset;
     private String duongDanAnh = "";
-
     private JTable table;
     private DefaultTableModel model;
-    private JButton btnThem, btnSua, btnXoa, btnReset;
+    private JDialog dialogForm;
+    private JButton btnLuu;
+
+
+    private final Color COLOR_PRIMARY = new Color(38, 70, 83);
+    private final Color COLOR_ACCENT = new Color(42, 157, 143);
+    private final Color COLOR_BG = Color.WHITE;
 
     public ThucDonView() {
-        setLayout(new BorderLayout());
+        setLayout(new BorderLayout(0, 20));
+        setBackground(COLOR_BG);
+        setBorder(new EmptyBorder(30, 40, 30, 40));
 
-        // TITLE
-        JPanel pnlTitle = new JPanel();
-        pnlTitle.setBackground(new Color(0, 77, 77));
+        // --- 1. HEADER ---
+        JPanel pnlHeader = new JPanel(new GridLayout(2, 1, 0, 5));
+        pnlHeader.setOpaque(false);
+        JLabel lblTitle = new JLabel("Quản Lý Menu Cà Phê");
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 28));
+        lblTitle.setForeground(COLOR_PRIMARY);
 
-        JLabel lblTitle = new JLabel("Thông tin Thực đơn");
-        lblTitle.setForeground(Color.WHITE);
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        JLabel lblSubTitle = new JLabel("Quản lý danh sách các loại cà phê và đồ uống trong quán");
+        lblSubTitle.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        lblSubTitle.setForeground(Color.GRAY);
+        pnlHeader.add(lblTitle);
+        pnlHeader.add(lblSubTitle);
 
-        pnlTitle.add(lblTitle);
+        // --- 2. ACTION BAR ---
+        JPanel pnlAction = new JPanel(new BorderLayout(25,0));
+        pnlAction.setOpaque(false);
 
-        add(pnlTitle, BorderLayout.NORTH);
+        txtSearch = new JTextField("  🔍  Tìm kiếm theo tên cà phê...") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new Color(230, 230, 230));
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 15, 15);
+                g2.dispose();
+            }
+        };
+        txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        txtSearch.setPreferredSize(new Dimension(780, 45));
+        txtSearch.setBorder(BorderFactory.createEmptyBorder(0, 15, 0, 15));
+        txtSearch.setForeground(Color.GRAY);
 
-        // --- FORM PANEL ---
-        JPanel pnlForm = new JPanel(new GridBagLayout());
-        pnlForm.setBackground(new Color(0, 77, 77));
-        pnlForm.setBorder(new EmptyBorder(20, 20, 20, 20));
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        btnThem = new JButton("+  Thêm Cà Phê") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new Color(53, 79, 78));
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20); // Hình viên thuốc chuẩn
+                g2.setColor(Color.WHITE);
+                g2.setFont(new Font("Segoe UI", Font.BOLD, 14));
+                FontMetrics fm = g2.getFontMetrics();
+                int x = (getWidth() - fm.stringWidth(getText())) / 2;
+                int y = (getHeight() + fm.getAscent() - fm.getDescent()) / 2;
+                g2.drawString(getText(), x, y);
+                g2.dispose();
+            }
+        };
+        btnThem.setPreferredSize(new Dimension(180, 45));
+        btnThem.setContentAreaFilled(false);
+        btnThem.setBorderPainted(false);
+        btnThem.setFocusPainted(false);
+        btnThem.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        // --- INPUT ---
-        addInput(pnlForm, gbc, 0, 0, "Mã món", txtMaMon = new JTextField(15));
-        txtMaMon.setEditable(false);
-        txtMaMon.setText("Tự động");
+        pnlAction.add(txtSearch, BorderLayout.WEST);
+        pnlAction.add(btnThem, BorderLayout.EAST);
 
-        addInput(pnlForm, gbc, 0, 1, "Tên món", txtTenMon = new JTextField(15));
-        addInput(pnlForm, gbc, 0, 2, "Đơn giá", txtDonGia = new JTextField(15));
-        addInput(pnlForm, gbc, 0, 3, "Đơn vị tính", txtDVT = new JTextField(15));
+        JPanel pnlTop = new JPanel(new BorderLayout(0, 25));
+        pnlTop.setOpaque(false);
+        pnlTop.add(pnlHeader, BorderLayout.NORTH);
+        pnlTop.add(pnlAction, BorderLayout.CENTER);
 
-        // ❌ ĐÃ BỎ Mã HH → chỉ còn Danh mục
-        cboDanhMuc = new JComboBox<>();
-        addInput(pnlForm, gbc, 0, 4, "Danh mục", cboDanhMuc);
-
-        // --- ẢNH ---
-        lblHinhAnh = new JLabel("Chưa có ảnh", SwingConstants.CENTER);
-        lblHinhAnh.setPreferredSize(new Dimension(150, 150));
-        lblHinhAnh.setBorder(new LineBorder(Color.WHITE, 1));
-        lblHinhAnh.setOpaque(true);
-        lblHinhAnh.setBackground(Color.LIGHT_GRAY);
-
-        gbc.gridx = 2; gbc.gridy = 0;
-        gbc.gridheight = 5;
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.insets = new Insets(5, 20, 5, 5);
-        pnlForm.add(lblHinhAnh, gbc);
-
-        btnChonAnh = new JButton("Chọn ảnh");
-        btnChonAnh.setFocusPainted(false);
-        btnChonAnh.setBackground(Color.WHITE);
-        btnChonAnh.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-        gbc.gridx = 2; gbc.gridy = 5;
-        gbc.gridheight = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        pnlForm.add(btnChonAnh, gbc);
-
-        btnChonAnh.addActionListener(e -> chonAnh());
-        lblHinhAnh.addMouseListener(new MouseAdapter() {
-            public void mouseClicked(MouseEvent e) { chonAnh(); }
-        });
-
-        // --- BUTTONS ---
-        JPanel pnlBtn = new JPanel();
-        pnlBtn.setBackground(new Color(0, 77, 77));
-        btnThem = createButton("Thêm");
-        btnSua = createButton("Sửa");
-        btnXoa = createButton("Xóa");
-        btnReset = createButton("Reset");
-
-        pnlBtn.add(btnThem);
-        pnlBtn.add(btnSua);
-        pnlBtn.add(btnXoa);
-        pnlBtn.add(btnReset);
-
-        JPanel pnlNorth = new JPanel(new BorderLayout());
-        pnlNorth.add(pnlForm, BorderLayout.CENTER);
-        pnlNorth.add(pnlBtn, BorderLayout.SOUTH);
-
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.add(pnlTitle, BorderLayout.NORTH);
-        topPanel.add(pnlNorth, BorderLayout.CENTER);
-
-        add(topPanel, BorderLayout.NORTH);
-
-        // --- TABLE ---
-        // ❌ ĐÃ BỎ CỘT Mã HH
-        String[] cols = {
-                "Mã món", "Tên món", "Đơn giá",
-                "Đơn vị tính",
-                "Danh mục",
-                "Hình ảnh"
+        // --- 3. TABLE VỚI HIỆU ỨNG HOVER ---
+        String[] cols = {"Mã", "Ảnh", "Tên món", "Giá", "ĐVT", "Danh mục", "Hành động"};
+        model = new DefaultTableModel(cols, 0) {
+            @Override
+            public Class<?> getColumnClass(int c) { return (c == 1) ? Icon.class : Object.class; }
+            @Override
+            public boolean isCellEditable(int r, int c) { return c == 6; }
         };
 
-        model = new DefaultTableModel(cols, 0);
-        table = new JTable(model);
-        table.setRowHeight(25);
-        add(new JScrollPane(table), BorderLayout.CENTER);
+        table = new JTable(model) {
+            private int hoveredRow = -1;
+
+            @Override
+            public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
+                Component c = super.prepareRenderer(renderer, row, column);
+                // Màu nền mặc định
+                c.setBackground(Color.WHITE);
+
+                // Hiệu ứng di chuột (Hover) - Nháy nhẹ xanh nhạt
+                if (row == hoveredRow) {
+                    c.setBackground(new Color(245, 248, 250));
+                }
+
+                // Hiệu ứng khi được chọn (Selection) - Phối màu xanh dịu
+                if (isRowSelected(row)) {
+                    c.setBackground(new Color(204, 243, 229));
+                    c.setFont(new Font("Segoe UI", Font.ITALIC, 14));
+                    c.setForeground(new Color(0, 105, 92));
+                } else {
+                    c.setForeground(Color.BLACK);
+                }
+                return c;
+            }
+
+            {
+                // Bắt sự kiện di chuyển chuột trên bảng
+                MouseAdapter ma = new MouseAdapter() {
+                    @Override
+                    public void mouseMoved(MouseEvent e) {
+                        int row = rowAtPoint(e.getPoint());
+                        if (row != hoveredRow) {
+                            hoveredRow = row;
+                            repaint();
+                        }
+                    }
+                    @Override
+                    public void mouseExited(MouseEvent e) {
+                        hoveredRow = -1;
+                        repaint();
+                    }
+                };
+                addMouseMotionListener(ma);
+                addMouseListener(ma);
+            }
+        };
+
+        setupTableStyle();
+
+        JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.setBorder(new LineBorder(new Color(245, 245, 245)));
+        scrollPane.getViewport().setBackground(Color.WHITE);
+
+        add(pnlTop, BorderLayout.NORTH);
+        add(scrollPane, BorderLayout.CENTER);
+
+        initDialogForm();
+        initHiddenButtons();
+        setupSearchPlaceholder();
+
     }
 
-    private void addInput(JPanel p, GridBagConstraints gbc, int x, int y, String lbl, Component cmp) {
-        gbc.gridx = x; gbc.gridy = y;
-        gbc.gridheight = 1;
-        gbc.insets = new Insets(5, 5, 5, 5);
+    private void setupTableStyle() {
+        table.setRowHeight(75);
+        table.setShowGrid(false); // Tắt lưới cho hiện đại
+        table.setIntercellSpacing(new Dimension(0, 0));
+        table.setFocusable(false); // Tắt khung viền nét đứt khi click
+        table.setFont(new Font("Segoe UI", Font.ITALIC, 14));
 
-        JLabel l = new JLabel(lbl);
-        l.setForeground(Color.WHITE);
-        p.add(l, gbc);
+        JTableHeader header = table.getTableHeader();
+        header.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        header.setBackground(Color.WHITE);
+        header.setForeground(Color.GRAY);
+        header.setPreferredSize(new Dimension(0, 50));
+        header.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(240, 240, 240)));
+        ((DefaultTableCellRenderer)header.getDefaultRenderer()).setHorizontalAlignment(JLabel.LEFT);
 
-        gbc.gridx = x+1;
-        p.add(cmp, gbc);
+        table.getColumnModel().getColumn(6).setCellRenderer(new ActionButtonRenderer());
+        table.getColumnModel().getColumn(6).setCellEditor(new ActionButtonEditor(new JCheckBox()));
     }
-    private JButton createButton(String text) {
-        JButton btn = new JButton(text);
-        btn.setBackground(Color.WHITE);
-        btn.setForeground(Color.BLACK);
-        btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        btn.setFocusPainted(false);
-        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        // 🔥 SIZE Ở ĐÂY
-        btn.setPreferredSize(new Dimension(80, 30));
+    private void initDialogForm() {
+        dialogForm = new JDialog();
+        dialogForm.setModal(true);
+        // Thu nhỏ chiều ngang xuống 400 và chiều cao vừa đủ 620
+        dialogForm.setSize(400, 620);
+        dialogForm.setLayout(new BorderLayout());
+        dialogForm.getContentPane().setBackground(Color.WHITE);
+        dialogForm.setLocationRelativeTo(null);
 
-        return btn;
+        // Header thu nhỏ lại
+        JPanel pnlHeader = new JPanel(new FlowLayout(FlowLayout.LEFT, 25, 15));
+        pnlHeader.setOpaque(false);
+        JLabel lblHeaderTitle = new JLabel("Thêm Món Mới");
+        lblHeaderTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        pnlHeader.add(lblHeaderTitle);
+
+        // Panel chính chứa Form
+        JPanel pnlMainForm = new JPanel();
+        pnlMainForm.setLayout(new BoxLayout(pnlMainForm, BoxLayout.Y_AXIS));
+        pnlMainForm.setOpaque(false);
+        // Giảm padding trái phải xuống 25 để form cân đối khi thu nhỏ
+        pnlMainForm.setBorder(new EmptyBorder(5, 25, 10, 25));
+
+        // Khởi tạo Component (Vẫn dùng các hàm helper bên dưới)
+        txtMaMon = createModernTextField("Tự động", false);
+        txtTenMon = createModernTextField("Nhập tên món...", true);
+        txtDonGia = createModernTextField("0", true);
+        txtDVT = createModernTextField("Ly, Cái...", true);
+        cboDanhMuc = createModernComboBox(new String[]{"Cà phê", "Trà", "Bánh ngọt"});
+
+        // Thêm các cụm Input (Khoảng cách giữa các cụm giảm xuống)
+        addModernInput(pnlMainForm, "Mã món", txtMaMon, false);
+        addModernInput(pnlMainForm, "Tên món", txtTenMon, true);
+        addModernInput(pnlMainForm, "Giá (VND)", txtDonGia, true);
+        addModernInput(pnlMainForm, "Đơn vị tính", txtDVT, true);
+        addModernInput(pnlMainForm, "Danh mục", cboDanhMuc, true);
+
+        // Phần chọn ảnh gọn hơn
+        JPanel pnlUpload = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 5));
+        pnlUpload.setOpaque(false);
+        lblHinhAnh = new JLabel("Ảnh", SwingConstants.CENTER);
+        lblHinhAnh.setPreferredSize(new Dimension(80, 80)); // Thu nhỏ khung ảnh
+        lblHinhAnh.setBorder(new ModernBorder(8));
+
+        btnChonAnh = new JButton("Chọn ảnh");
+        btnChonAnh.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+
+        pnlUpload.add(lblHinhAnh);
+        pnlUpload.add(Box.createHorizontalStrut(15));
+        pnlUpload.add(btnChonAnh);
+        pnlMainForm.add(pnlUpload);
+
+        // Nút Lưu ôm sát hơn
+        btnLuu = createStyledButton("Xác nhận Lưu", COLOR_ACCENT);
+        btnLuu.setPreferredSize(new Dimension(0, 45));
+
+        JPanel pnlFooter = new JPanel(new BorderLayout());
+        pnlFooter.setOpaque(false);
+        pnlFooter.setBorder(new EmptyBorder(10, 25, 20, 25));
+        pnlFooter.add(btnLuu, BorderLayout.CENTER);
+
+        dialogForm.add(pnlHeader, BorderLayout.NORTH);
+        dialogForm.add(pnlMainForm, BorderLayout.CENTER);
+        dialogForm.add(pnlFooter, BorderLayout.SOUTH);
+
+        btnChonAnh.addActionListener(e -> chonAnh());
+    }
+
+    private void addInput(JPanel p, GridBagConstraints gbc, int y, String lbl, Component c) {
+        gbc.gridx = 0; gbc.gridy = y; gbc.weightx = 0; p.add(new JLabel(lbl), gbc);
+        gbc.gridx = 1; gbc.weightx = 1.0; gbc.insets = new Insets(10, 10, 10, 0); p.add(c, gbc);
+        gbc.insets = new Insets(10, 0, 10, 0);
+    }
+
+    private JButton createStyledButton(String text, Color bg) {
+        JButton b = new JButton(text) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getBackground());
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 35, 35);
+                super.paintComponent(g);
+                g2.dispose();
+            }
+        };
+        b.setBackground(bg);
+        b.setForeground(Color.WHITE);
+        b.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        b.setContentAreaFilled(false); b.setBorderPainted(false); b.setOpaque(false);
+        return b;
+    }
+
+    private void setupSearchPlaceholder() {
+        txtSearch.addFocusListener(new FocusAdapter() {
+            public void focusGained(FocusEvent e) {
+                if (txtSearch.getText().contains("🔍")) { txtSearch.setText(""); txtSearch.setForeground(Color.BLACK); }
+            }
+            public void focusLost(FocusEvent e) {
+                if (txtSearch.getText().isEmpty()) { txtSearch.setText("  🔍  Tìm kiếm theo tên cà phê..."); txtSearch.setForeground(Color.GRAY); }
+            }
+        });
+    }
+
+    // --- RENDERER ĐỒNG BỘ MÀU HOVER ---
+    // Thay thế Class ActionButtonRenderer
+    class ActionButtonRenderer extends JPanel implements TableCellRenderer {
+        private JButton btnEditIcon = new JButton("✎");
+        private JButton btnDeleteIcon = new JButton("🗑");
+
+        public ActionButtonRenderer() {
+            setLayout(new FlowLayout(FlowLayout.LEFT, 10, 20));
+            setOpaque(true);
+            // Định dạng nhanh cho icon
+            setupIcon(btnEditIcon, COLOR_ACCENT);
+            setupIcon(btnDeleteIcon, new Color(231, 76, 60));
+            add(btnEditIcon); add(btnDeleteIcon);
+        }
+
+        private void setupIcon(JButton b, Color c) {
+            b.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 18));
+            b.setForeground(c);
+            b.setBorderPainted(false); b.setContentAreaFilled(false);
+        }
+
+        public Component getTableCellRendererComponent(JTable t, Object v, boolean s, boolean f, int r, int c) {
+            setBackground(t.prepareRenderer(t.getDefaultRenderer(Object.class), r, c).getBackground());
+            return this;
+        }
+    }
+
+    // Thay thế Class ActionButtonEditor để bắt được đúng nút nào được nhấn
+    class ActionButtonEditor extends DefaultCellEditor {
+        private JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 20));
+        private JButton btnEdit = new JButton("✎");
+        private JButton btnDelete = new JButton("🗑");
+
+        public ActionButtonEditor(JCheckBox cb) {
+            super(cb);
+            panel.setOpaque(true);
+            setupIcon(btnEdit, COLOR_ACCENT);
+            setupIcon(btnDelete, new Color(231, 76, 60));
+
+            // Sự kiện Sửa
+            btnEdit.addActionListener(e -> {
+                fireEditingStopped();
+                btnSua.doClick(); // 🔥 GỌI CONTROLLER
+            });
+
+            // Sự kiện Xoá: Kích hoạt nút ẩn để Controller nhận được
+            btnDelete.addActionListener(e -> {
+                fireEditingStopped();
+                btnXoa.doClick(); // Kích hoạt sự kiện cho Controller
+            });
+
+            panel.add(btnEdit); panel.add(btnDelete);
+        }
+
+        private void setupIcon(JButton b, Color c) {
+            b.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 18));
+            b.setForeground(c);
+            b.setBorderPainted(false); b.setContentAreaFilled(false);
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable t, Object v, boolean s, int r, int c) {
+            panel.setBackground(t.getSelectionBackground());
+            return panel;
+        }
+
+        @Override public Object getCellEditorValue() { return ""; }
+    }
+
+    public MonAn getMonAnInfo() {
+        double gia = 0;
+        try { gia = Double.parseDouble(txtDonGia.getText().replace(",", "")); } catch(Exception e) {}
+        return new MonAn(txtMaMon.getText(), txtTenMon.getText(), gia, txtDVT.getText(), duongDanAnh, cboDanhMuc.getSelectedItem().toString());
+    }
+
+    public void fillForm(MonAn m) {
+        txtMaMon.setText(m.getMaMon()); txtTenMon.setText(m.getTenMon());
+        txtDonGia.setText(String.format("%.0f", m.getDonGia()));
+        txtDVT.setText(m.getDonViTinh());
+        if (m.getTenDanhMuc() != null) cboDanhMuc.setSelectedItem(m.getTenDanhMuc());
+        duongDanAnh = m.getHinhAnh();
+        setHinhAnhToLabel(duongDanAnh);
+    }
+
+    public void clearForm() {
+        txtMaMon.setText("Tự động"); txtTenMon.setText(""); txtDonGia.setText(""); txtDVT.setText("");
+        duongDanAnh = ""; lblHinhAnh.setIcon(null); lblHinhAnh.setText("Chưa có ảnh");
     }
 
     private void chonAnh() {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setFileFilter(new FileNameExtensionFilter("Hình ảnh", "jpg", "png", "jpeg"));
-
-        int result = fileChooser.showOpenDialog(this);
-        if (result == JFileChooser.APPROVE_OPTION) {
-            File selectedFile = fileChooser.getSelectedFile();
-            duongDanAnh = selectedFile.getAbsolutePath();
+        JFileChooser fc = new JFileChooser();
+        if (fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            duongDanAnh = fc.getSelectedFile().getAbsolutePath();
             setHinhAnhToLabel(duongDanAnh);
         }
     }
 
     public void setHinhAnhToLabel(String path) {
-        if (path == null || path.isEmpty()) {
-            lblHinhAnh.setIcon(null);
-            lblHinhAnh.setText("Chưa có ảnh");
-            return;
-        }
-
+        if (path == null || path.isEmpty()) return;
         try {
-            ImageIcon icon = new ImageIcon(path);
-            Image img = icon.getImage();
-            Image newImg = img.getScaledInstance(150, 150, Image.SCALE_SMOOTH);
-            lblHinhAnh.setIcon(new ImageIcon(newImg));
-            lblHinhAnh.setText("");
-        } catch (Exception e) {
-            lblHinhAnh.setText("Lỗi ảnh");
-        }
-    }
-
-    public MonAn getMonAnInfo() {
-        double gia = 0;
-        try {
-            String giaStr = txtDonGia.getText().trim().replace(",", "");
-            if (!giaStr.isEmpty()) {
-                gia = Double.parseDouble(giaStr);
-            }
-        } catch (Exception e) {
-            gia = 0;
-        }
-
-        String tenDanhMuc = "";
-        if (cboDanhMuc.getSelectedItem() != null) {
-            tenDanhMuc = cboDanhMuc.getSelectedItem().toString();
-        }
-
-        return new MonAn(
-                txtMaMon.getText(),
-                txtTenMon.getText(),
-                gia,
-                txtDVT.getText(),
-                duongDanAnh,
-                tenDanhMuc
-        );
-    }
-
-    public void fillForm(MonAn m) {
-        txtMaMon.setText(m.getMaMon());
-        txtTenMon.setText(m.getTenMon());
-        txtDonGia.setText(String.format("%.0f", m.getDonGia()));
-        txtDVT.setText(m.getDonViTinh());
-
-        if(m.getTenDanhMuc() != null) {
-            cboDanhMuc.setSelectedItem(m.getTenDanhMuc());
-        }
-
-        duongDanAnh = m.getHinhAnh();
-
-        if (duongDanAnh != null && !duongDanAnh.isEmpty()) {
-            setHinhAnhToLabel(duongDanAnh);
-        } else {
-            lblHinhAnh.setIcon(null);
-            lblHinhAnh.setText("Chưa có ảnh");
-        }
-    }
-
-    public void clearForm() {
-        txtMaMon.setText("Tự động");
-        txtTenMon.setText("");
-        txtDonGia.setText("");
-        txtDVT.setText("");
-
-        if (cboDanhMuc.getItemCount() > 0) {
-            cboDanhMuc.setSelectedIndex(0);
-        }
-
-        duongDanAnh = null; // ✅ nên dùng null
-        lblHinhAnh.setIcon(null);
-        lblHinhAnh.setText("Chưa có ảnh");
-    }
-
-    public JComboBox<String> getCboDanhMuc(){
-        return cboDanhMuc;
+            Image img = new ImageIcon(path).getImage().getScaledInstance(120, 120, Image.SCALE_SMOOTH);
+            lblHinhAnh.setIcon(new ImageIcon(img)); lblHinhAnh.setText("");
+        } catch(Exception e) { lblHinhAnh.setText("Lỗi ảnh"); }
     }
 
     public void addRow(MonAn m) {
-        model.addRow(new Object[]{
-                m.getMaMon(),
-                m.getTenMon(),
-                String.format("%,.0f", m.getDonGia()),
-                m.getDonViTinh(),
-                m.getTenDanhMuc(),
-                m.getHinhAnh() // ✅ QUAN TRỌNG
-        });
+        ImageIcon icon = null;
+        if (m.getHinhAnh() != null && !m.getHinhAnh().isEmpty()) {
+            Image img = new ImageIcon(m.getHinhAnh()).getImage().getScaledInstance(45, 45, Image.SCALE_SMOOTH);
+            icon = new ImageIcon(img);
+        }
+        model.addRow(new Object[]{m.getMaMon(), icon, m.getTenMon(), String.format("%,.0f đ", m.getDonGia()), m.getDonViTinh(), m.getTenDanhMuc(), ""});
     }
-    public void clearTable() { model.setRowCount(0); }
-    public int getSelectedRow() { return table.getSelectedRow(); }
+
+    private void initHiddenButtons() { btnSua = new JButton(); btnXoa = new JButton(); btnReset = new JButton(); }
     public JTable getTable() { return table; }
+    public JComboBox<String> getCboDanhMuc() { return cboDanhMuc; }
     public void addThemListener(ActionListener al) { btnThem.addActionListener(al); }
     public void addSuaListener(ActionListener al) { btnSua.addActionListener(al); }
     public void addXoaListener(ActionListener al) { btnXoa.addActionListener(al); }
-    public void addResetListener(ActionListener al) { btnReset.addActionListener(al); }
+    public int getSelectedRow() { return table.getSelectedRow(); }
+    public JDialog getDialogForm() {
+        return dialogForm;
+    }
+
+    public JButton getBtnLuu() {
+        return btnLuu;
+    }
+    public JTextField getTxtSearch() { return txtSearch; }
+    public void clearTable() { model.setRowCount(0); }
+    // Hàm tạo Label và Input xếp chồng
+    // Hàm tạo cụm Label + Input
+    private void addModernInput(JPanel container, String title, JComponent input, boolean required) {
+        JPanel pnlGroup = new JPanel(new BorderLayout(0, 5)); // Giảm khoảng cách nhãn và ô nhập
+        pnlGroup.setOpaque(false);
+        pnlGroup.setBorder(new EmptyBorder(0, 0, 10, 0)); // Giảm khoảng cách giữa các cụm
+
+        String labelText = required ? "<html>" + title + " <font color='red'>*</font></html>" : title;
+        JLabel lblTitle = new JLabel(labelText);
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 13)); // Giảm font nhãn 1 tí
+        lblTitle.setForeground(new Color(80, 80, 80));
+
+        pnlGroup.add(lblTitle, BorderLayout.NORTH);
+        pnlGroup.add(input, BorderLayout.CENTER);
+        container.add(pnlGroup);
+    }
+
+    // Tạo TextField
+    private JTextField createModernTextField(String hint, boolean editable) {
+        JTextField tf = new JTextField();
+        tf.setEditable(editable);
+        tf.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        tf.setPreferredSize(new Dimension(0, 38)); // Giảm chiều cao xuống 38px cho gọn
+        tf.setBorder(BorderFactory.createCompoundBorder(
+                new ModernBorder(8),
+                BorderFactory.createEmptyBorder(0, 12, 0, 12)
+        ));
+        if (!editable) tf.setBackground(new Color(248, 248, 248));
+        return tf;
+    }
+
+    // Tạo ComboBox
+    private JComboBox createModernComboBox(String[] items) {
+        JComboBox cb = new JComboBox(items);
+        cb.setPreferredSize(new Dimension(0, 38)); // Chiều cao 38px khớp với TextField
+        cb.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        cb.setBackground(Color.WHITE);
+        cb.setBorder(new ModernBorder(8));
+        return cb;
+    }
+    class ModernBorder extends AbstractBorder {
+        private int radius;
+        public ModernBorder(int radius) { this.radius = radius; }
+
+        @Override
+        public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(new Color(220, 220, 220));
+            g2.drawRoundRect(x, y, width - 1, height - 1, radius, radius);
+            g2.dispose();
+        }
+
+        @Override
+        public Insets getBorderInsets(Component c) {
+            return new Insets(radius/2, radius/2, radius/2, radius/2);
+        }
+    }
 }

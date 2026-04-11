@@ -3,189 +3,138 @@ package CH.controller;
 import CH.dao.KhachHangDAO;
 import CH.model.KhachHang;
 import CH.view.KhachHangView;
-
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.List;
-import java.util.regex.Pattern;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import java.text.Normalizer;
+import java.util.List;
+import java.util.regex.Pattern;
 
 public class KhachHangController {
-    
     private KhachHangView view;
-    private KhachHangDAO khachHangDAO;
+    private KhachHangDAO dao;
+    private boolean isEdit = false; // Phân biệt Thêm/Sửa giống ThucDonController
 
     public KhachHangController(KhachHangView view) {
         this.view = view;
-        this.khachHangDAO = new KhachHangDAO();
+        this.dao = new KhachHangDAO();
 
-        loadDataToView();
+        loadData(""); // Load dữ liệu mặc định
 
-        view.addThemListener(new AddListener());
-        view.addSuaListener(new EditListener());
-        view.addXoaListener(new DeleteListener());
-        view.addResetListener(e -> {
+        // 1. Tìm kiếm thời gian thực (Live Search)
+        view.getTxtSearch().getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) { search(); }
+            public void removeUpdate(DocumentEvent e) { search(); }
+            public void changedUpdate(DocumentEvent e) { search(); }
+            private void search() {
+                String keyword = view.getTxtSearch().getText();
+                // Bỏ qua nếu là placeholder
+                if (keyword.contains("🔍")) loadData("");
+                else loadData(keyword);
+            }
+        });
+
+        // 2. Sự kiện nút Thêm (Mở Dialog)
+        view.getBtnThem().addActionListener(e -> {
+            isEdit = false;
             view.clearForm();
-            KhachHang kh = view.getKhachHangInfo();
-            if(kh != null) kh.setMaKH("Tự động sinh"); 
+            view.getDialogForm().setTitle("Thêm Khách Hàng Mới");
+            view.getDialogForm().setVisible(true);
         });
-        view.addLiveSearchListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                xuLyTimKiem(); // Gọi tìm kiếm khi gõ thêm chữ
-            }
 
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                xuLyTimKiem(); // Gọi tìm kiếm khi xóa chữ
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                xuLyTimKiem(); // Gọi khi thay đổi thuộc tính (ít dùng nhưng cứ để)
-            }
-        });
-        
-        view.addTableSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                int row = view.getSelectedRow();
-                if (row >= 0) {
-                    try {
-                        KhachHang kh = new KhachHang(
-                            view.getTable().getValueAt(row, 0).toString(),
-                            view.getTable().getValueAt(row, 1).toString(),
-                            view.getTable().getValueAt(row, 2).toString(), // TheLoai
-                            view.getTable().getValueAt(row, 3).toString(),
-                            view.getTable().getValueAt(row, 4).toString(),
-                            view.getTable().getValueAt(row, 5).toString(),
-                            view.getTable().getValueAt(row, 6).toString()
-                        );
-                        view.fillForm(kh);
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                    }
+        // 3. Sự kiện nút Sửa (Gọi từ Icon trong Table)
+        view.getBtnSua().addActionListener(e -> {
+            int row = view.getTable().getSelectedRow();
+            if (row >= 0) {
+                isEdit = true;
+                String maKH = view.getTable().getValueAt(row, 0).toString();
+                KhachHang kh = dao.getById(maKH); // Giả định DAO có hàm getById
+                if (kh != null) {
+                    view.fillForm(kh);
+                    view.getDialogForm().setTitle("Cập Nhật Thông Tin Khách Hàng");
+                    view.getDialogForm().setVisible(true);
                 }
             }
         });
-    }
 
-    public void loadDataToView() {
-        view.clearTable();
-        List<KhachHang> list = khachHangDAO.getAll(); 
-        for (KhachHang kh : list) {
-            view.addRowToTable(kh);
-        }
-    }
-
-    // [QUAN TRỌNG] Validate cho cấu trúc mới
-    private boolean validateForm(KhachHang kh) {
-        if (kh.getTenKH().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(view, "Tên khách hàng không được để trống!");
-            return false;
-        }
-        
-        // [MỚI] Validate thể loại
-        if (kh.getTheLoai() == null || kh.getTheLoai().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(view, "Vui lòng chọn loại khách hàng (VIP/Vãng lai)!");
-            return false;
-        }
-
-        if (kh.getSoDienThoai().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(view, "Số điện thoại không được để trống!");
-            return false;
-        }
-
-        String phoneRegex = "^0\\d{9}$";
-        if (!Pattern.matches(phoneRegex, kh.getSoDienThoai())) {
-            JOptionPane.showMessageDialog(view, "Số điện thoại không hợp lệ!");
-            return false;
-        }
-        if (kh.getDiaChi().trim().isEmpty()) {
-            JOptionPane.showMessageDialog(view, "Địa chỉ không được để trống!");
-            return false;
-        }
-
-        return true; 
-    }
-
-    // --- INNER CLASSES (Giữ nguyên logic gọi hàm) ---
-    class AddListener implements ActionListener {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            KhachHang kh = view.getKhachHangInfo();
-            if (!validateForm(kh)) return; 
-            
-            String newID = khachHangDAO.getNewID();
-            kh.setMaKH(newID);
-
-            if (khachHangDAO.add(kh)) {
-                JOptionPane.showMessageDialog(view, "Thêm thành công!");
-                loadDataToView();
-                view.clearForm();
-            } else {
-                JOptionPane.showMessageDialog(view, "Thêm thất bại!");
-            }
-        }
-    }
-
-    class EditListener implements ActionListener {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            int row = view.getSelectedRow();
-            if (row < 0) {
-                JOptionPane.showMessageDialog(view, "Chọn khách hàng cần sửa!");
-                return;
-            }
-            KhachHang kh = view.getKhachHangInfo();
-            if (!validateForm(kh)) return;
-
-            if (khachHangDAO.update(kh)) {
-                JOptionPane.showMessageDialog(view, "Cập nhật thành công!");
-                loadDataToView();
-            } else {
-                JOptionPane.showMessageDialog(view, "Cập nhật thất bại!");
-            }
-        }
-    }
-
-    class DeleteListener implements ActionListener {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            int row = view.getSelectedRow();
+        // 4. Sự kiện nút Xóa (Gọi từ Icon trong Table)
+        view.getBtnXoa().addActionListener(e -> {
+            int row = view.getTable().getSelectedRow();
             if (row >= 0) {
                 String maKH = view.getTable().getValueAt(row, 0).toString();
-                int confirm = JOptionPane.showConfirmDialog(view, "Xóa khách hàng " + maKH + "?", "Xác nhận", JOptionPane.YES_NO_OPTION);
+                String tenKH = view.getTable().getValueAt(row, 1).toString();
+
+                int confirm = JOptionPane.showConfirmDialog(view,
+                        "Bạn có chắc chắn muốn xóa khách hàng [" + tenKH + "]?",
+                        "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
+
                 if (confirm == JOptionPane.YES_OPTION) {
-                    if (khachHangDAO.delete(maKH)) {
-                        JOptionPane.showMessageDialog(view, "Xóa thành công!");
-                        loadDataToView();
-                        view.clearForm();
+                    if (dao.delete(maKH)) {
+                        JOptionPane.showMessageDialog(view, "Đã xóa khách hàng thành công!");
+                        loadData("");
                     } else {
-                        JOptionPane.showMessageDialog(view, "Xóa thất bại!");
+                        JOptionPane.showMessageDialog(view, "Lỗi: Không thể xóa khách hàng này!");
                     }
                 }
+            }
+        });
+
+        // 5. Nút Lưu (Nằm trong Dialog)
+        view.getBtnLuu().addActionListener(e -> {
+            KhachHang kh = view.getKhachHangInfo();
+
+            // Validate sơ bộ
+            if (kh.getTenKH().isEmpty() || kh.getSoDienThoai().isEmpty()) {
+                JOptionPane.showMessageDialog(view.getDialogForm(), "Vui lòng nhập tên và số điện thoại!");
+                return;
+            }
+
+            if (isEdit) {
+                if (dao.update(kh)) {
+                    JOptionPane.showMessageDialog(view.getDialogForm(), "Cập nhật thành công!");
+                    view.getDialogForm().dispose();
+                    loadData("");
+                } else {
+                    JOptionPane.showMessageDialog(view.getDialogForm(), "Cập nhật thất bại!");
+                }
             } else {
-                JOptionPane.showMessageDialog(view, "Vui lòng chọn khách hàng để xóa!");
+                if (dao.insert(kh)) {
+                    JOptionPane.showMessageDialog(view.getDialogForm(), "Thêm khách hàng thành công!");
+                    view.getDialogForm().dispose();
+                    loadData("");
+                } else {
+                    JOptionPane.showMessageDialog(view.getDialogForm(), "Lỗi: Số điện thoại hoặc Mã đã tồn tại!");
+                }
+            }
+        });
+    }
+
+    // Hàm load dữ liệu và filter (Đồng bộ logic với ThucDonController)
+    private void loadData(String keyword) {
+        view.clearTable();
+        String searchKey = removeAccent(keyword.toLowerCase().trim());
+        List<KhachHang> list = dao.getAll();
+
+        for (KhachHang kh : list) {
+            String tenKoDau = removeAccent(kh.getTenKH().toLowerCase());
+            String maKoDau = kh.getMaKH().toLowerCase();
+            String sdt = kh.getSoDienThoai();
+
+            if (searchKey.isEmpty() || tenKoDau.contains(searchKey) ||
+                    maKoDau.contains(searchKey) || sdt.contains(searchKey)) {
+                view.addRow(kh); // View đã có sẵn hàm addRow(KhachHang kh)
             }
         }
     }
-    private void xuLyTimKiem() {
-        String keyword = view.getTuKhoaTimKiem();
-        List<KhachHang> list;
 
-        if (keyword.isEmpty()) {
-            list = khachHangDAO.getAll(); // Nếu rỗng thì load hết
-        } else {
-            list = khachHangDAO.search(keyword); // Gọi hàm search mới viết
-        }
-
-        // Cập nhật bảng
-        view.clearTable();
-        for (KhachHang kh : list) {
-            view.addRowToTable(kh);
-        }
-
+    // Hàm loại bỏ dấu tiếng Việt
+    private String removeAccent(String s) {
+        String temp = Normalizer.normalize(s, Normalizer.Form.NFD);
+        Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+        return pattern.matcher(temp).replaceAll("")
+                .replace('đ', 'd').replace('Đ', 'D');
+    }
+    public void loadData() {
+        loadData(""); // Tự động gọi hàm có tham số với chuỗi rỗng
     }
 }

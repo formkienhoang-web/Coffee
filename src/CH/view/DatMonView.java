@@ -225,8 +225,8 @@ public class DatMonView extends JPanel {
         btnXoaMon = new JButton("XOÁ MÓN");
         btnXoaMon.setFont(new Font("Arial", Font.BOLD, 12));
         btnThanhToan = new JButton("THANH TOÁN");
-        btnThanhToan.setBackground(new Color(255, 77, 77));
-        btnThanhToan.setForeground(Color.BLACK);
+//        btnThanhToan.setBackground(new Color(255, 77, 77));
+//        btnThanhToan.setForeground(Color.BLACK);
         btnThanhToan.setFont(new Font("Arial", Font.BOLD, 12));
 
         pnlBtns.add(btnXoaMon);

@@ -2,8 +2,9 @@ package CH.controller;
 
 import CH.dao.DanhMucDAO;
 import CH.view.DanhMucView;
-
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
@@ -14,54 +15,71 @@ public class DanhMucController {
     private DanhMucDAO dao;
     private ThucDonController thucDonController;
     private DatMonController datMonController;
+    private boolean isEdit = false;
 
-    public void setDatMonController(DatMonController controller){
+    public void setDatMonController(DatMonController controller) {
         this.datMonController = controller;
     }
 
-    public void setThucDonController(ThucDonController controller){
+    public void setThucDonController(ThucDonController controller) {
         this.thucDonController = controller;
     }
 
-    public DanhMucController(DanhMucView view){
+    public DanhMucController(DanhMucView view) {
         this.view = view;
         this.dao = new DanhMucDAO();
 
-        loadDataToView();
-
-        // ✅ FIX DOUBLE LISTENER
+        // 🔥 FIX DOUBLE LISTENER
         removeAllListeners();
 
-        // CRUD
-        view.getBtnThem().addActionListener(new AddListener());
-        view.getBtnSua().addActionListener(new EditListener());
-        view.getBtnXoa().addActionListener(new DeleteListener());
-        view.getBtnReset().addActionListener(e -> view.clearForm());
+        loadDataToView();
 
-        // 🔥 SEARCH BUTTON
-        view.addTimKiemListener(e -> timKiem());
-
-        // 🔥 REALTIME SEARCH
-        view.addLiveSearchListener(new javax.swing.event.DocumentListener() {
-            public void insertUpdate(javax.swing.event.DocumentEvent e) { timKiem(); }
-            public void removeUpdate(javax.swing.event.DocumentEvent e) { timKiem(); }
-            public void changedUpdate(javax.swing.event.DocumentEvent e) { timKiem(); }
+        // ===== THÊM =====
+        view.getBtnThem().addActionListener(e -> {
+            isEdit = false;
+            view.clearForm();
+            view.getDialogForm().setTitle("Thêm Danh Mục Mới");
+            view.getDialogForm().setVisible(true);
         });
 
-        // Click table → đổ lên form
-        view.getTable().getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                int r = view.getTable().getSelectedRow();
-                if (r >= 0) {
-                    String ma = view.getTable().getValueAt(r,0).toString();
-                    String ten = view.getTable().getValueAt(r,1).toString();
-                    view.setForm(ma,ten);
-                }
+        // ===== SỬA =====
+        view.getBtnSua().addActionListener(e -> {
+            int row = view.getTable().getSelectedRow();
+            if (row >= 0) {
+                isEdit = true;
+                String ma = view.getTable().getValueAt(row, 0).toString();
+                String ten = view.getTable().getValueAt(row, 1).toString();
+                view.setForm(ma, ten);
+                view.getDialogForm().setTitle("Chỉnh Sửa Danh Mục");
+                view.getDialogForm().setVisible(true);
+            } else {
+                JOptionPane.showMessageDialog(view, "Vui lòng chọn danh mục trên bảng để sửa!");
+            }
+        });
+
+        // ===== LƯU =====
+        view.getBtnLuu().addActionListener(new SaveListener());
+
+        // ===== XÓA =====
+        view.getBtnXoa().addActionListener(new DeleteListener());
+
+        // ===== SEARCH KHÔNG DẤU =====
+        view.getTxtSearch().getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) { search(); }
+            @Override
+            public void removeUpdate(DocumentEvent e) { search(); }
+            @Override
+            public void changedUpdate(DocumentEvent e) { search(); }
+
+            private void search() {
+                String keyword = view.getTuKhoaTimKiem();
+                loadDataWithFilter(keyword);
             }
         });
     }
 
-    // ================= REMOVE LISTENER =================
+    // 🔥 REMOVE LISTENER
     private void removeAllListeners() {
         for (ActionListener al : view.getBtnThem().getActionListeners()) {
             view.getBtnThem().removeActionListener(al);
@@ -72,154 +90,61 @@ public class DanhMucController {
         for (ActionListener al : view.getBtnXoa().getActionListeners()) {
             view.getBtnXoa().removeActionListener(al);
         }
-        for (ActionListener al : view.getBtnReset().getActionListeners()) {
-            view.getBtnReset().removeActionListener(al);
+        for (ActionListener al : view.getBtnLuu().getActionListeners()) {
+            view.getBtnLuu().removeActionListener(al);
         }
     }
 
-    // ================= TẠO MÃ =================
-    private String taoMaDM() {
-        int max = 0;
-
-        for (String[] dm : dao.getAll()) {
-            String ma = dm[0];
-
-            if (ma.startsWith("DM")) {
-                try {
-                    int so = Integer.parseInt(ma.substring(2));
-                    if (so > max) max = so;
-                } catch (Exception e) {}
-            }
-        }
-
-        return String.format("DM%02d", max + 1);
+    // 🔥 HÀM BỎ DẤU (GIỐNG THỰC ĐƠN)
+    private String removeAccent(String s) {
+        String temp = java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFD);
+        return temp.replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
+                .replace('đ', 'd')
+                .replace('Đ', 'D');
     }
 
-    // ================= LOAD =================
-    public void loadDataToView(){
-        view.clearTable();
-        List<String[]> list = dao.getAll();
-        for(String[] dm : list){
-            view.addRow(dm);
-        }
-    }
-
-    // ================= 🔥 SEARCH =================
-    private void timKiem() {
-        String keyword = view.getTuKhoaTimKiem().toLowerCase();
-
-        // 👉 nếu rỗng → load lại full
-        if (keyword.isEmpty()) {
-            loadDataToView();
-            return;
-        }
-
-        view.clearTable();
-        List<String[]> list = dao.getAll();
-
-        for (String[] dm : list) {
-            if (dm[1].toLowerCase().contains(keyword)) {
-                view.addRow(dm);
-            }
-        }
-    }
-
-    // ================= VALIDATE =================
-    private boolean validateForm(String ma, String ten){
-        if(ma.trim().isEmpty()){
-            JOptionPane.showMessageDialog(view,"Mã danh mục không được để trống!");
-            return false;
-        }
-
-        if(ten.trim().isEmpty()){
-            JOptionPane.showMessageDialog(view,"Tên danh mục không được để trống!");
-            return false;
-        }
-
-        return true;
-    }
-
-    // ================= ADD =================
-    class AddListener implements ActionListener {
+    // ===== SAVE =====
+    class SaveListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            try {
-                String ten = view.getTenDM();
+            String ten = view.getTenDM().trim();
 
-                if (ten.trim().isEmpty()) {
-                    JOptionPane.showMessageDialog(view, "Tên danh mục không được để trống!");
-                    return;
-                }
-
-                String maTuDong = taoMaDM();
-
-                if (dao.insert(maTuDong, ten)) {
-                    JOptionPane.showMessageDialog(view, "Thêm thành công!");
-                    loadDataToView();
-                    view.clearForm();
-
-                    if(thucDonController != null){
-                        thucDonController.loadDanhMucToComboBox();
-                    }
-                    if(datMonController != null){
-                        datMonController.reloadDanhMuc();
-                    }
-                } else {
-                    JOptionPane.showMessageDialog(view, "Thêm thất bại!");
-                }
-
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(view, "Lỗi: " + ex.getMessage());
-            }
-        }
-    }
-
-    // ================= EDIT =================
-    class EditListener implements ActionListener {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            int row = view.getTable().getSelectedRow();
-
-            if(row < 0){
-                JOptionPane.showMessageDialog(view,"Vui lòng chọn danh mục để sửa!");
+            if (ten.isEmpty()) {
+                JOptionPane.showMessageDialog(view, "Tên danh mục không được để trống!");
                 return;
             }
 
-            String ma = view.getMaDM();
-            String ten = view.getTenDM();
-
-            if(!validateForm(ma,ten)) return;
-
-            if(dao.update(ma,ten)){
-                JOptionPane.showMessageDialog(view,"Sửa thành công!");
-                loadDataToView();
-                view.clearForm();
-
-                if(thucDonController != null){
-                    thucDonController.loadDanhMucToComboBox();
-                }
-                if(datMonController != null){
-                    datMonController.reloadDanhMuc();
-                }
+            boolean success;
+            if (!isEdit) {
+                String maMoi = taoMaTuDong();
+                success = dao.insert(maMoi, ten);
             } else {
-                JOptionPane.showMessageDialog(view,"Sửa thất bại!");
+                String maHienTai = view.getMaDM();
+                success = dao.update(maHienTai, ten);
+            }
+
+            if (success) {
+                JOptionPane.showMessageDialog(view, "Cập nhật dữ liệu thành công!");
+                loadDataToView();
+                view.getDialogForm().dispose();
+                refreshOtherScreens();
+            } else {
+                JOptionPane.showMessageDialog(view, "Thao tác thất bại!");
             }
         }
     }
 
-    // ================= DELETE =================
+    // ===== DELETE =====
     class DeleteListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
             int row = view.getTable().getSelectedRow();
-
             if (row >= 0) {
                 String ma = view.getTable().getValueAt(row, 0).toString();
-
                 int confirm = JOptionPane.showConfirmDialog(
                         view,
-                        "Xóa danh mục " + ma + "?",
-                        "Xác nhận",
+                        "Bạn có chắc muốn xóa danh mục " + ma + "?",
+                        "Xác nhận xóa",
                         JOptionPane.YES_NO_OPTION
                 );
 
@@ -227,22 +152,60 @@ public class DanhMucController {
                     if (dao.delete(ma)) {
                         JOptionPane.showMessageDialog(view, "Xóa thành công!");
                         loadDataToView();
-                        view.clearForm();
-
-                        if(thucDonController != null){
-                            thucDonController.loadDanhMucToComboBox();
-                        }
-                        if(datMonController != null){
-                            datMonController.reloadDanhMuc();
-                        }
+                        refreshOtherScreens();
                     } else {
-                        JOptionPane.showMessageDialog(view, "Xóa thất bại!");
+                        JOptionPane.showMessageDialog(view, "Không thể xóa danh mục đang có món ăn!");
                     }
                 }
-            } else {
-                JOptionPane.showMessageDialog(view, "Vui lòng chọn danh mục để xóa!");
             }
         }
     }
 
+    // ===== LOAD =====
+    private void loadDataToView() {
+        view.clearTable();
+        List<String[]> list = dao.getAll();
+        for (String[] dm : list) {
+            view.addRow(dm);
+        }
+    }
+
+    // 🔥 SEARCH KHÔNG DẤU (ĐÃ FIX)
+    private void loadDataWithFilter(String keyword) {
+        view.clearTable();
+
+        String searchKey = removeAccent(keyword.toLowerCase());
+
+        List<String[]> list = dao.getAll();
+        for (String[] dm : list) {
+            String tenKoDau = removeAccent(dm[1].toLowerCase());
+
+            if (searchKey.isEmpty() || tenKoDau.contains(searchKey)) {
+                view.addRow(dm);
+            }
+        }
+    }
+
+    private String taoMaTuDong() {
+        List<String[]> list = dao.getAll();
+        if (list.isEmpty()) return "DM01";
+
+        int max = 0;
+        for (String[] dm : list) {
+            try {
+                int so = Integer.parseInt(dm[0].substring(2));
+                if (so > max) max = so;
+            } catch (Exception e) {}
+        }
+        return String.format("DM%02d", max + 1);
+    }
+
+    private void refreshOtherScreens() {
+        if (thucDonController != null) {
+            thucDonController.loadDanhMucToComboBox();
+        }
+        if (datMonController != null) {
+            datMonController.reloadDanhMuc();
+        }
+    }
 }
