@@ -13,6 +13,7 @@ import javax.swing.AbstractCellEditor;
 
 public class DatMonView extends JPanel {
 
+
     private JTable tableGioHang;
     private DefaultTableModel modelGioHang;
 
@@ -217,17 +218,18 @@ public class DatMonView extends JPanel {
         JPanel pnlFooter = new JPanel(new GridLayout(2, 1));
 
         lblTongTien = new JLabel("Tổng tiền: 0 VNĐ", SwingConstants.RIGHT);
-        lblTongTien.setFont(new Font("Arial", Font.BOLD, 16));
-        lblTongTien.setForeground(Color.RED);
+        lblTongTien.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        lblTongTien.setForeground(new Color(60,60,60));
         lblTongTien.setBorder(new EmptyBorder(5, 5, 5, 5));
 
         JPanel pnlBtns = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         btnXoaMon = new JButton("XOÁ MÓN");
-        btnXoaMon.setFont(new Font("Arial", Font.BOLD, 12));
+        btnXoaMon.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        btnXoaMon.setForeground(new Color(60,60,60));
         btnThanhToan = new JButton("THANH TOÁN");
 //        btnThanhToan.setBackground(new Color(255, 77, 77));
-//        btnThanhToan.setForeground(Color.BLACK);
-        btnThanhToan.setFont(new Font("Arial", Font.BOLD, 12));
+        btnThanhToan.setForeground(new Color(60,60,60));
+        btnThanhToan.setFont(new Font("Segoe UI", Font.BOLD, 12));
 
         pnlBtns.add(btnXoaMon);
         pnlBtns.add(btnThanhToan);
@@ -275,11 +277,12 @@ public class DatMonView extends JPanel {
         lblImg.setIcon(new ImageIcon(img));
 
         JLabel lblTen = new JLabel(ten, SwingConstants.CENTER);
-        lblTen.setFont(new Font("Arial", Font.BOLD, 13));
+        lblTen.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        lblTen.setForeground(new Color(40,40,40));
 
         JLabel lblGia = new JLabel(String.format("%,.0f VNĐ", gia), SwingConstants.CENTER);
-        lblGia.setForeground(new Color(0, 102, 204));
-        lblGia.setFont(new Font("Arial", Font.BOLD, 13));
+        lblGia.setForeground(new Color(60,60,60));
+        lblGia.setFont(new Font("Segoe UI", Font.BOLD, 10));
 
         JPanel info = new JPanel(new GridLayout(2,1));
         info.setBackground(Color.WHITE);

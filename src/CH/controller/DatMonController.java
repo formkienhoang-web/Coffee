@@ -245,7 +245,7 @@ public class DatMonController {
             view.getModelGioHang().setRowCount(0);
             updateTongTien();
 
-            if (hoaDonController != null) hoaDonController.loadData();
+            if (hoaDonController != null) hoaDonController.loadData("");
             if (khachHangController != null) khachHangController.loadData();
 
         } catch (Exception ex) {

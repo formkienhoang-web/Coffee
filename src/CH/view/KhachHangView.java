@@ -67,15 +67,32 @@ public class KhachHangView extends JPanel {
                 Component c = super.prepareRenderer(renderer, row, column);
                 c.setBackground(Color.WHITE);
 
-                if (row == hoveredRow) c.setBackground(new Color(245, 248, 250));
+                if (c instanceof JComponent) {
+                    ((JComponent) c).putClientProperty(
+                            RenderingHints.KEY_TEXT_ANTIALIASING,
+                            RenderingHints.VALUE_TEXT_ANTIALIAS_ON
+                    );
+                }
 
+                // ✅ Đồng bộ font
+                c.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+
+                c.setBackground(Color.WHITE);
+
+                // Hover
+                if (row == hoveredRow) {
+                    c.setBackground(new Color(245, 248, 250));
+                }
+
+                // Selected
                 if (isRowSelected(row)) {
                     c.setBackground(new Color(204, 243, 229));
-                    c.setFont(new Font("Segoe UI", Font.ITALIC, 14));
                     c.setForeground(new Color(0, 105, 92));
+//                    c.setFont(new Font("Segoe UI", Font.BOLD, 14));
                 } else {
-                    c.setForeground(Color.BLACK);
+                    c.setForeground(new Color(60, 60, 60));
                 }
+
                 return c;
             }
             {
@@ -104,22 +121,48 @@ public class KhachHangView extends JPanel {
     }
 
     private void setupTableStyle() {
-        table.setRowHeight(60);
+        table.setRowHeight(60); // giống hoadon
         table.setShowGrid(false);
         table.setIntercellSpacing(new Dimension(0, 0));
         table.setFocusable(false);
-        table.setFont(new Font("Segoe UI", Font.ITALIC, 14));
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
 
         JTableHeader header = table.getTableHeader();
-        header.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        header.setBackground(Color.WHITE);
-        header.setForeground(Color.GRAY);
         header.setPreferredSize(new Dimension(0, 50));
-        header.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(240, 240, 240)));
+
+        header.setDefaultRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(
+                    JTable table, Object value, boolean isSelected,
+                    boolean hasFocus, int row, int column) {
+
+                JLabel label = (JLabel) super.getTableCellRendererComponent(
+                        table, value, isSelected, hasFocus, row, column);
+
+                label.setFont(new Font("Segoe UI", Font.BOLD, 13));
+                label.setBackground(new Color(242, 245, 248));
+                label.setForeground(Color.GRAY);
+                if (column == 7) {
+                    label.setHorizontalAlignment(JLabel.CENTER);
+                } else {
+                    label.setHorizontalAlignment(JLabel.LEFT);
+                }
+
+                // chỉ giữ 1 đường kẻ dưới
+                label.setBorder(BorderFactory.createMatteBorder(
+                        0, 0, 1, 0, new Color(240, 240, 240)));
+
+                return label;
+            }
+        });
 
         // Cột Hành động
         table.getColumnModel().getColumn(7).setCellRenderer(new ActionButtonRenderer());
         table.getColumnModel().getColumn(7).setCellEditor(new ActionButtonEditor(new JCheckBox()));
+        table.getColumnModel().getColumn(1).setPreferredWidth(150);  // Họ tên
+        table.getColumnModel().getColumn(2).setPreferredWidth(80);   // Loại KH
+        table.getColumnModel().getColumn(3).setPreferredWidth(70);   // Giới tính
+        table.getColumnModel().getColumn(4).setPreferredWidth(180);  // Email
     }
 
     private void initDialogForm() {
@@ -167,7 +210,7 @@ public class KhachHangView extends JPanel {
 
     // --- RENDERER & EDITOR CHO ACTION COLUMN ---
     class ActionButtonRenderer extends JPanel implements TableCellRenderer {
-        public ActionButtonRenderer() { setLayout(new FlowLayout(FlowLayout.LEFT, 10, 12)); setOpaque(true); }
+        public ActionButtonRenderer() { setLayout(new FlowLayout(FlowLayout.CENTER, 0, 10)); setOpaque(true); }
         public Component getTableCellRendererComponent(JTable t, Object v, boolean s, boolean f, int r, int c) {
             setBackground(t.prepareRenderer(t.getDefaultRenderer(Object.class), r, c).getBackground());
             removeAll();
@@ -178,7 +221,7 @@ public class KhachHangView extends JPanel {
     }
 
     class ActionButtonEditor extends DefaultCellEditor {
-        private JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 12));
+        private JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 10));
         public ActionButtonEditor(JCheckBox cb) {
             super(cb); panel.setOpaque(true);
             JButton e = createIconBtn("✎", COLOR_ACCENT);

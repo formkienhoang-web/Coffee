@@ -94,7 +94,7 @@ public class NhanVienView extends JPanel {
         pnlTop.add(pnlAction, BorderLayout.CENTER);
 
         // --- 3. TABLE VỚI HIỆU ỨNG ---
-        String[] cols = {"Mã NV", "Họ Tên", "Ngày Sinh", "GT", "Chức Vụ", "SĐT", "Hành động"};
+        String[] cols = {"Mã NV", "Họ tên", "Ngày sinh", "Giới tính", "Chức vụ", "SĐT", "Hành động"};
         model = new DefaultTableModel(cols, 0) {
             @Override
             public boolean isCellEditable(int r, int c) { return c == 6; }
@@ -110,18 +110,32 @@ public class NhanVienView extends JPanel {
                 c.setBackground(Color.WHITE);
 
                 // Hiệu ứng di chuột (Hover) - Nháy nhẹ xanh nhạt
+                if (c instanceof JComponent) {
+                    ((JComponent) c).putClientProperty(
+                            RenderingHints.KEY_TEXT_ANTIALIASING,
+                            RenderingHints.VALUE_TEXT_ANTIALIAS_ON
+                    );
+                }
+
+                // ✅ Đồng bộ font
+                c.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+
+                c.setBackground(Color.WHITE);
+
+                // Hover
                 if (row == hoveredRow) {
                     c.setBackground(new Color(245, 248, 250));
                 }
 
-                // Hiệu ứng khi được chọn (Selection) - Phối màu xanh dịu
+                // Selected
                 if (isRowSelected(row)) {
                     c.setBackground(new Color(204, 243, 229));
-                    c.setFont(new Font("Segoe UI", Font.ITALIC, 14));
                     c.setForeground(new Color(0, 105, 92));
+//                    c.setFont(new Font("Segoe UI", Font.BOLD, 14));
                 } else {
-                    c.setForeground(Color.BLACK);
+                    c.setForeground(new Color(60, 60, 60));
                 }
+
                 return c;
             }
 
@@ -162,21 +176,45 @@ public class NhanVienView extends JPanel {
     }
 
     private void setupTableStyle() {
-        table.setRowHeight(50);
+        table.setRowHeight(60); // giống hoadon
         table.setShowGrid(false);
-        table.setFocusable(false);
         table.setIntercellSpacing(new Dimension(0, 0));
-        table.setFont(new Font("Segoe UI", Font.ITALIC, 14));
+        table.setFocusable(false);
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
 
         JTableHeader header = table.getTableHeader();
-        header.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        header.setBackground(Color.WHITE);
-        header.setForeground(Color.GRAY);
-        header.setPreferredSize(new Dimension(0, 40));
-        header.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(240, 240, 240)));
+        header.setPreferredSize(new Dimension(0, 50));
+
+        header.setDefaultRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(
+                    JTable table, Object value, boolean isSelected,
+                    boolean hasFocus, int row, int column) {
+
+                JLabel label = (JLabel) super.getTableCellRendererComponent(
+                        table, value, isSelected, hasFocus, row, column);
+
+                label.setFont(new Font("Segoe UI", Font.BOLD, 13));
+                label.setBackground(new Color(242, 245, 248));
+                label.setForeground(Color.GRAY);
+                if (column == 6) {
+                    label.setHorizontalAlignment(JLabel.CENTER);
+                } else {
+                    label.setHorizontalAlignment(JLabel.LEFT);
+                }
+
+                // chỉ giữ 1 đường kẻ dưới
+                label.setBorder(BorderFactory.createMatteBorder(
+                        0, 0, 1, 0, new Color(240, 240, 240)));
+
+                return label;
+            }
+        });
 
         table.getColumnModel().getColumn(6).setCellRenderer(new ActionButtonRenderer());
         table.getColumnModel().getColumn(6).setCellEditor(new ActionButtonEditor(new JCheckBox()));
+        table.getColumnModel().getColumn(1).setPreferredWidth(180); // Họ tên
+        table.getColumnModel().getColumn(2).setPreferredWidth(120); // Loại KH
     }
 
     private void initDialogForm() {
@@ -246,7 +284,7 @@ public class NhanVienView extends JPanel {
         private JButton btnEditIcon = new JButton("✎");
         private JButton btnDeleteIcon = new JButton("🗑");
         public ActionButtonRenderer() {
-            setLayout(new FlowLayout(FlowLayout.CENTER, 10, 10));
+            setLayout(new FlowLayout(FlowLayout.CENTER, 0, 10));
             setOpaque(true);
             setupIcon(btnEditIcon, COLOR_ACCENT);
             setupIcon(btnDeleteIcon, new Color(231, 76, 60));
@@ -264,7 +302,7 @@ public class NhanVienView extends JPanel {
     }
 
     class ActionButtonEditor extends DefaultCellEditor {
-        private JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        private JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 10));
         private JButton btnEdit = new JButton("✎");
         private JButton btnDelete = new JButton("🗑");
         public ActionButtonEditor(JCheckBox cb) {
@@ -340,14 +378,14 @@ public class NhanVienView extends JPanel {
     // --- CÁC HÀM GETTER/SETTER CHO CONTROLLER ---
     public NhanVien getNhanVienInfo() {
         String gt = rdoNam.isSelected() ? "Nam" : "Nữ";
-        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
         String ns = txtNgaySinh.getDate() != null ? sdf.format(txtNgaySinh.getDate()) : "";
         return new NhanVien(txtMaNV.getText(), txtTenNV.getText(), ns, gt, txtChucVu.getText(), txtSDT.getText(), txtDiaChi.getText(), txtUsername.getText(), new String(txtPassword.getPassword()), cboRole.getSelectedItem().toString());
     }
 
     public void fillForm(NhanVien nv) {
         txtMaNV.setText(nv.getMaNV()); txtTenNV.setText(nv.getTenNV());
-        try { txtNgaySinh.setDate(new java.text.SimpleDateFormat("yyyy-MM-dd").parse(nv.getNgaySinh())); } catch(Exception e) {}
+        try { txtNgaySinh.setDate(new java.text.SimpleDateFormat("dd/MM/yyyy").parse(nv.getNgaySinh())); } catch(Exception e) {}
         if ("Nam".equals(nv.getGioiTinh())) rdoNam.setSelected(true); else rdoNu.setSelected(true);
         txtChucVu.setText(nv.getChucVu()); txtSDT.setText(nv.getSoDienThoai()); txtDiaChi.setText(nv.getDiaChi());
         txtUsername.setText(nv.getUsername()); txtPassword.setText(""); cboRole.setSelectedItem(nv.getRole());

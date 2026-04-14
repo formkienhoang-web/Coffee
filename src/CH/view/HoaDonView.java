@@ -1,198 +1,245 @@
 package CH.view;
 
-import com.toedter.calendar.JDateChooser;
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.table.DefaultTableModel;
+import javax.swing.border.*;
+import javax.swing.table.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 import CH.model.HoaDon;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 public class HoaDonView extends JPanel {
-    private final Color TEAL_COLOR = new Color(0, 77, 77);
-    
-    // Components
-    private JTextField txtMaHD, txtNhanVien, txtKhachHang;
-    private JDateChooser txtNgayLap;
+    private JTextField txtSearch;
     private JTable tableHoaDon;
     private DefaultTableModel tableModel;
-    
-    // Buttons
-    private JButton btnXemChiTiet; 
-    private JButton btnThem, btnSua, btnXoa, btnReset; 
+    private JButton btnTriggerXem; // Nút ẩn để kích hoạt sự kiện cho Controller
+
+    // Bảng màu đồng bộ với ThucDonView
+    private final Color COLOR_PRIMARY = new Color(38, 70, 83);
+    private final Color COLOR_ACCENT = new Color(42, 157, 143);
+    private final Color COLOR_BG = Color.WHITE;
 
     public HoaDonView() {
-        setLayout(new BorderLayout());
+        // Layout BorderLayout với khoảng cách giống ThucDonView để không bị nháy khi chuyển Tab
+        setLayout(new BorderLayout(0, 20));
+        setBackground(COLOR_BG);
+        setBorder(new EmptyBorder(30, 40, 30, 40));
+
         initUI();
     }
 
     private void initUI() {
-// --- 1. TOP CONTAINER (Chứa Tiêu đề + Form + Nút) ---
-        JPanel pnlContainer = new JPanel();
-        pnlContainer.setLayout(new BoxLayout(pnlContainer, BoxLayout.Y_AXIS));
-        pnlContainer.setBackground(TEAL_COLOR);
-        pnlContainer.setBorder(new EmptyBorder(10, 20, 10, 20));
+        // --- 1. HEADER (Giống ThucDonView) ---
+        JPanel pnlHeader = new JPanel(new GridLayout(2, 1, 0, 5));
+        pnlHeader.setOpaque(false);
+        JLabel lblTitle = new JLabel("Lịch Sử Hóa Đơn");
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 28));
+        lblTitle.setForeground(COLOR_PRIMARY);
 
-        //TIÊU ĐỀ
-        JLabel lblTitle = new JLabel("Thông tin hóa đơn");
-        lblTitle.setForeground(Color.WHITE);
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        lblTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
-        
-        pnlContainer.add(lblTitle);
-        pnlContainer.add(Box.createRigidArea(new Dimension(0, 15))); 
+        JLabel lblSubTitle = new JLabel("Tra cứu danh sách và chi tiết các hóa đơn ");
+        lblSubTitle.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        lblSubTitle.setForeground(Color.GRAY);
+        pnlHeader.add(lblTitle);
+        pnlHeader.add(lblSubTitle);
 
-        // --- FORM AREA (Chứa Input và Nút Xem chi tiết) ---
-        JPanel pnlFormArea = new JPanel(new BorderLayout());
-        pnlFormArea.setBackground(TEAL_COLOR);
+        // --- 2. ACTION BAR (Thanh tìm kiếm) ---
+        JPanel pnlAction = new JPanel(new BorderLayout());
+        pnlAction.setOpaque(false);
 
-        // A. LEFT SIDE: Inputs + CRUD Buttons
-        JPanel pnlLeft = new JPanel(new BorderLayout());
-        pnlLeft.setBackground(TEAL_COLOR);
+        txtSearch = new JTextField("  🔍  Tìm kiếm mã hóa đơn hoặc tên khách...") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new Color(230, 230, 230));
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 15, 15);
+                g2.dispose();
+            }
+        };
+        txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        txtSearch.setPreferredSize(new Dimension(780, 45));
+        txtSearch.setBorder(BorderFactory.createEmptyBorder(0, 15, 0, 15));
+        txtSearch.setForeground(Color.GRAY);
+        setupSearchPlaceholder();
 
-        // Inputs
-        JPanel pnlInputs = new JPanel(new GridBagLayout());
-        pnlInputs.setBackground(TEAL_COLOR);
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 20);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        pnlAction.add(txtSearch, BorderLayout.WEST);
 
-        addInput(pnlInputs, gbc, 0, 0, "Mã hóa đơn", txtMaHD = new JTextField(15));
-        txtMaHD.setEditable(false);
-        txtMaHD.setBackground(new Color(230, 230, 230));
-        txtMaHD.setText("Tự động sinh");
-        
-        addInput(pnlInputs, gbc, 0, 1, "Nhân viên lập", txtNhanVien = new JTextField(15));
-        addInput(pnlInputs, gbc, 0, 2, "Khách hàng", txtKhachHang = new JTextField(15));
-        
-        txtNgayLap = new JDateChooser();
-        txtNgayLap.setDateFormatString("dd/MM/yyyy");
-        txtNgayLap.setPreferredSize(new Dimension(150, 25));
-        addInput(pnlInputs, gbc, 0, 3, "Ngày lập", txtNgayLap);
+        JPanel pnlTop = new JPanel(new BorderLayout(0, 25));
+        pnlTop.setOpaque(false);
+        pnlTop.add(pnlHeader, BorderLayout.NORTH);
+        pnlTop.add(pnlAction, BorderLayout.CENTER);
 
-        pnlLeft.add(pnlInputs, BorderLayout.CENTER);
+        // --- 3. TABLE VỚI HIỆU ỨNG HOVER ---
+        String[] cols = {"Mã hóa đơn", "Nhân viên lập", "Khách hàng", "Ngày lập", "Tổng tiền", "Chi tiết"};
+        tableModel = new DefaultTableModel(cols, 0) {
+            @Override
+            public boolean isCellEditable(int r, int c) { return c == 5; } // Chỉ cho click cột Chi tiết
+        };
 
-        // CRUD Buttons
-        JPanel pnlCRUD = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
-        pnlCRUD.setBackground(TEAL_COLOR);
-        pnlCRUD.setBorder(new EmptyBorder(5, 0, 0, 0));
+        tableHoaDon = new JTable(tableModel) {
+            private int hoveredRow = -1;
 
-//        btnThem = createStyledButton("Thêm");
-        btnSua = createStyledButton("Sửa");
-        btnXoa = createStyledButton("Xóa");
-        btnReset = createStyledButton("Reset");
+            @Override
+            public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
+                Component c = super.prepareRenderer(renderer, row, column);
+                c.setBackground(Color.WHITE);
 
-//         pnlCRUD.add(btnSua); pnlCRUD.add(btnXoa); pnlCRUD.add(btnReset);
-        pnlLeft.add(pnlCRUD, BorderLayout.SOUTH);
+                // Khử răng cưa cho chữ
+                if (c instanceof JComponent) {
+                    ((JComponent) c).putClientProperty(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                }
 
-        // B. RIGHT SIDE: Nút Xem chi tiết
-        JPanel pnlRight = new JPanel(new GridBagLayout());
-        pnlRight.setBackground(TEAL_COLOR);
-        
-        btnXemChiTiet = new JButton("<html><center>Xem chi tiết<br>hóa đơn</center></html>");
-        btnXemChiTiet.setPreferredSize(new Dimension(120, 60));
-        btnXemChiTiet.setBackground(Color.WHITE);
-        btnXemChiTiet.setForeground(TEAL_COLOR);
-        btnXemChiTiet.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        btnXemChiTiet.setFocusPainted(false);
-        btnXemChiTiet.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        
-        pnlRight.add(btnXemChiTiet);
+                // Hiệu ứng Hover (Nháy nhẹ giống ThucDonView)
+                if (row == hoveredRow) {
+                    c.setBackground(new Color(245, 248, 250));
+                }
 
-        // Add Left & Right vào Form Area
-        pnlFormArea.add(pnlLeft, BorderLayout.CENTER);
-        pnlFormArea.add(pnlRight, BorderLayout.EAST);
+                // Hiệu ứng Selection
+                if (isRowSelected(row)) {
+                    c.setBackground(new Color(204, 243, 229));
+                    c.setForeground(new Color(0, 105, 92));
+                } else {
+                    c.setForeground(new Color(60, 60, 60));
+                }
+                return c;
+            }
 
-        // Add Form Area vào Container chính
-        pnlContainer.add(pnlFormArea);
+            {
+                MouseAdapter ma = new MouseAdapter() {
+                    @Override
+                    public void mouseMoved(MouseEvent e) {
+                        int row = rowAtPoint(e.getPoint());
+                        if (row != hoveredRow) {
+                            hoveredRow = row;
+                            repaint();
+                        }
+                    }
+                    @Override
+                    public void mouseExited(MouseEvent e) {
+                        hoveredRow = -1;
+                        repaint();
+                    }
+                };
+                addMouseMotionListener(ma);
+                addMouseListener(ma);
+            }
+        };
 
-        add(pnlContainer, BorderLayout.NORTH);
+        setupTableStyle();
 
-        // --- CENTER TABLE ---
-        String[] columns = {"Mã hóa đơn", "Nhân viên lập", "Tên Khách hàng", "Ngày lập", "Tổng tiền"};
-        tableModel = new DefaultTableModel(columns, 0);
-        tableHoaDon = new JTable(tableModel);
-        tableHoaDon.setRowHeight(30);
-        tableHoaDon.getTableHeader().setBackground(new Color(230, 230, 230));
-        tableHoaDon.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
-        
         JScrollPane scrollPane = new JScrollPane(tableHoaDon);
+        scrollPane.setBorder(new LineBorder(new Color(245, 245, 245)));
         scrollPane.getViewport().setBackground(Color.WHITE);
+
+        add(pnlTop, BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
+
+        btnTriggerXem = new JButton(); // Nút ẩn
     }
 
-    // --- Helpers ---
-    private void addInput(JPanel p, GridBagConstraints gbc, int x, int y, String label, Component cmp) {
-        gbc.gridx = x; gbc.gridy = y; gbc.weightx = 0;
-        JLabel lbl = new JLabel(label);
-        lbl.setForeground(Color.WHITE);
-        lbl.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        p.add(lbl, gbc);
-        
-        gbc.gridx = x + 1; gbc.weightx = 1.0;
-        if (cmp.getPreferredSize() == null || cmp.getPreferredSize().width == 0) {
-             cmp.setPreferredSize(new Dimension(150, 25));
+    private void setupTableStyle() {
+        tableHoaDon.setRowHeight(60);
+        tableHoaDon.setShowGrid(false);
+        tableHoaDon.setIntercellSpacing(new Dimension(0, 0));
+        tableHoaDon.setFocusable(false);
+        tableHoaDon.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+
+        // Header Style (Không kẻ dọc)
+        JTableHeader header = tableHoaDon.getTableHeader();
+        header.setPreferredSize(new Dimension(0, 50));
+        header.setDefaultRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                JLabel label = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                label.setFont(new Font("Segoe UI", Font.BOLD, 13));
+                label.setBackground(new Color(242, 245, 248));
+                label.setForeground(Color.GRAY);
+                if (column == 5) {
+                    label.setHorizontalAlignment(JLabel.CENTER);
+                } else {
+                    label.setHorizontalAlignment(JLabel.LEFT);
+                }
+                label.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(240, 240, 240)));
+                return label;
+            }
+        });
+
+        // Cột Action: Chỉ có icon xem chi tiết
+        tableHoaDon.getColumnModel().getColumn(5).setCellRenderer(new ActionRenderer());
+        tableHoaDon.getColumnModel().getColumn(5).setCellEditor(new ActionEditor(new JCheckBox()));
+        tableHoaDon.getColumnModel().getColumn(1).setPreferredWidth(180); // Họ tên
+        tableHoaDon.getColumnModel().getColumn(2).setPreferredWidth(120); // Loại KH
+    }
+
+    private void setupSearchPlaceholder() {
+        txtSearch.addFocusListener(new FocusAdapter() {
+            public void focusGained(FocusEvent e) {
+                if (txtSearch.getText().contains("🔍")) { txtSearch.setText(""); txtSearch.setForeground(Color.BLACK); }
+            }
+            public void focusLost(FocusEvent e) {
+                if (txtSearch.getText().isEmpty()) { txtSearch.setText("  🔍  Tìm kiếm mã hóa đơn hoặc tên khách..."); txtSearch.setForeground(Color.GRAY); }
+            }
+        });
+    }
+
+    // --- Renderer cho nút Xem chi tiết (👁) ---
+    class ActionRenderer extends JPanel implements TableCellRenderer {
+        private JButton btnView = new JButton("👁");
+        public ActionRenderer() {
+            setLayout(new FlowLayout(FlowLayout.CENTER, 0, 10));
+            setOpaque(true);
+            btnView.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 20));
+            btnView.setForeground(COLOR_ACCENT);
+            btnView.setBorderPainted(false);
+            btnView.setContentAreaFilled(false);
+            add(btnView);
         }
-        p.add(cmp, gbc);
-    }
-
-    private JButton createStyledButton(String text) {
-        JButton btn = new JButton(text);
-        btn.setBackground(Color.WHITE);
-        btn.setForeground(Color.BLACK);
-        btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        btn.setPreferredSize(new Dimension(80, 30));
-        btn.setFocusPainted(false);
-        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        return btn;
-    }
-
-    // --- Public Methods for Controller ---
-    
-    // 1. Lấy dữ liệu từ Form (Nếu sau này bạn làm chức năng Thêm hóa đơn)
-    public HoaDon getHoaDonInfo() {
-        String strNgay = "";
-        if (txtNgayLap.getDate() != null) {
-            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-            strNgay = sdf.format(txtNgayLap.getDate());
-        }
-        // Lưu ý: Tổng tiền mặc định là 0 khi lấy từ form nhập tay
-        return new HoaDon(txtMaHD.getText(), txtNhanVien.getText(), txtKhachHang.getText(), strNgay, 0);
-    }
-
-    // 2. Đổ dữ liệu lên form (khi click bảng)
-    public void fillForm(HoaDon hd) {
-        txtMaHD.setText(hd.getMaHD());
-        txtNhanVien.setText(hd.getTenNV());
-        txtKhachHang.setText(hd.getTenKH());
-        try {
-            Date date = new SimpleDateFormat("dd/MM/yyyy").parse(hd.getNgayLap());
-            txtNgayLap.setDate(date);
-        } catch (Exception e) {
-            txtNgayLap.setDate(null);
+        public Component getTableCellRendererComponent(JTable t, Object v, boolean s, boolean f, int r, int c) {
+            setBackground(t.prepareRenderer(t.getDefaultRenderer(Object.class), r, c).getBackground());
+            return this;
         }
     }
-    
-    // 3. Xóa trắng form
-    public void clearForm() {
-        txtMaHD.setText("Tự động sinh");
-        txtNhanVien.setText("");
-        txtKhachHang.setText("");
-        txtNgayLap.setDate(null);
+
+    // --- Editor cho nút Xem chi tiết (👁) ---
+    class ActionEditor extends DefaultCellEditor {
+        private JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 10));
+        private JButton btnView = new JButton("👁");
+        public ActionEditor(JCheckBox cb) {
+            super(cb);
+            panel.setOpaque(true);
+            btnView.setFont(new Font("Segoe UI Symbol", Font.PLAIN, 20));
+            btnView.setForeground(COLOR_ACCENT);
+            btnView.setBorderPainted(false);
+            btnView.setContentAreaFilled(false);
+            btnView.addActionListener(e -> {
+                fireEditingStopped();
+                btnTriggerXem.doClick(); // Kích hoạt sự kiện xem chi tiết cho Controller
+            });
+            panel.add(btnView);
+        }
+        @Override
+        public Component getTableCellEditorComponent(JTable t, Object v, boolean s, int r, int c) {
+            panel.setBackground(t.getSelectionBackground());
+            return panel;
+        }
+        @Override public Object getCellEditorValue() { return ""; }
     }
 
-    // 4. Các phương thức bảng và nút
-    public void addRow(HoaDon hd) { tableModel.addRow(hd.toObjectArray()); }
+    // Các hàm công khai cho Controller
+    public void addRow(HoaDon hd) {
+        tableModel.addRow(new Object[]{
+                hd.getMaHD(),
+                hd.getTenNV(),
+                hd.getTenKH(),
+                hd.getNgayLap(),
+                String.format("%,.0f đ", hd.getTongTien()),
+                ""
+        });
+    }
+
     public void clearTable() { tableModel.setRowCount(0); }
     public int getSelectedRow() { return tableHoaDon.getSelectedRow(); }
     public JTable getTable() { return tableHoaDon; }
-    
-    // Listeners
-    public void addXemChiTietListener(ActionListener al) { btnXemChiTiet.addActionListener(al); }
-//    public void addThemListener(ActionListener al) { btnThem.addActionListener(al); }
-    public void addSuaListener(ActionListener al) { btnSua.addActionListener(al); }
-    public void addXoaListener(ActionListener al) { btnXoa.addActionListener(al); }
-    public void addResetListener(ActionListener al) { btnReset.addActionListener(al); }
+    public JTextField getTxtSearch() { return txtSearch; }
+    public void addXemChiTietListener(ActionListener al) { btnTriggerXem.addActionListener(al); }
 }

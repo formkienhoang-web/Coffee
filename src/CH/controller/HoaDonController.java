@@ -4,13 +4,14 @@ import CH.dao.HoaDonDAO;
 import CH.model.HoaDon;
 import CH.model.ChiTietHoaDon;
 import CH.view.HoaDonView;
-
+import CH.view.ChiTietHoaDonView;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import java.text.Normalizer;
 import java.util.List;
-import CH.view.ChiTietHoaDonView;
+import java.util.regex.Pattern;
 
 public class HoaDonController {
     private HoaDonView view;
@@ -19,152 +20,87 @@ public class HoaDonController {
     public HoaDonController(HoaDonView view) {
         this.view = view;
         this.dao = new HoaDonDAO();
-        
-        dao.addSampleDataIfEmpty(); 
 
-        loadData();
+        // 1. Load dữ liệu ban đầu
+        loadData("");
 
-//        view.addThemListener(new AddListener());
-        view.addSuaListener(new EditListener());
-        view.addXoaListener(new DeleteListener());
-        view.addResetListener(e -> view.clearForm());
-        
-        view.addXemChiTietListener(e -> showHoaDonChiTiet());
-        
-        view.getTable().getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                fillFormFromTable();
-            }
-        });
-    }
+        // 2. Xử lý tìm kiếm Real-time (Đồng bộ với ThucDonController)
+        view.getTxtSearch().getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) { search(); }
+            @Override
+            public void removeUpdate(DocumentEvent e) { search(); }
+            @Override
+            public void changedUpdate(DocumentEvent e) { search(); }
 
-    public void loadData() {
-        view.clearTable();
-        List<HoaDon> list = dao.getAll();
-        for (HoaDon hd : list) {
-            view.addRow(hd);
-        }
-    }
-
-    // Hàm lấy dữ liệu từ bảng đổ lên form nhập liệu
-    private void fillFormFromTable() {
-        int row = view.getSelectedRow();
-        if (row >= 0) {
-            String maHD = view.getTable().getValueAt(row, 0).toString();
-            String tenNV = view.getTable().getValueAt(row, 1).toString();
-            String tenKH = view.getTable().getValueAt(row, 2).toString();
-            String ngayLap = view.getTable().getValueAt(row, 3).toString();
-            
-            String strTien = view.getTable().getValueAt(row, 4).toString();
-            double tongTien = 0;
-            try {
-                strTien = strTien.replace(" VNĐ", "").replace(",", "").replace(".", "").trim();
-                tongTien = Double.parseDouble(strTien);
-            } catch (Exception ex) {}
-
-            HoaDon hd = new HoaDon(maHD, tenNV, tenKH, ngayLap, tongTien);
-            view.fillForm(hd);
-        }
-    }
-    
-    // Validate đơn giản
-    private boolean validateForm(HoaDon hd) {
-        if (hd.getTenNV().isEmpty() || hd.getNgayLap().isEmpty()) {
-            JOptionPane.showMessageDialog(view, "Vui lòng nhập Nhân viên và Ngày lập!");
-            return false;
-        }
-        return true;
-    }
-
-
-    class AddListener implements ActionListener {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-
-            HoaDon hd = view.getHoaDonInfo();
-            
-
-            if (!validateForm(hd)) return;
-            
-            String newID = dao.getNewID();
-            hd.setMaHD(newID); 
-            
-
-            if (dao.add(hd)) {
-                JOptionPane.showMessageDialog(view, "Thêm hóa đơn thành công: " + newID);
-                loadData();
-                view.clearForm();
-            } else {
-                JOptionPane.showMessageDialog(view, "Thêm thất bại!");
-            }
-        }
-    }
-
-    class EditListener implements ActionListener {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            if (view.getSelectedRow() < 0) {
-                JOptionPane.showMessageDialog(view, "Chọn hóa đơn cần sửa!");
-                return;
-            }
-            HoaDon hd = view.getHoaDonInfo();
-            
-            if (!validateForm(hd)) return;
-
-            if (dao.update(hd)) {
-                JOptionPane.showMessageDialog(view, "Cập nhật thành công!");
-                loadData();
-            } else {
-                JOptionPane.showMessageDialog(view, "Cập nhật thất bại!");
-            }
-        }
-    }
-
-    class DeleteListener implements ActionListener {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            if (view.getSelectedRow() < 0) {
-                JOptionPane.showMessageDialog(view, "Chọn hóa đơn cần xóa!");
-                return;
-            }
-            int row = view.getSelectedRow();
-            String maHD = view.getTable().getValueAt(row, 0).toString();
-            
-            int confirm = JOptionPane.showConfirmDialog(view, "Bạn chắc chắn muốn xóa HĐ " + maHD + "?", "Xác nhận", JOptionPane.YES_NO_OPTION);
-            
-            if (confirm == JOptionPane.YES_OPTION) {
-                if (dao.delete(maHD)) {
-                    JOptionPane.showMessageDialog(view, "Xóa thành công!");
-                    loadData();
-                    view.clearForm();
+            private void search() {
+                String keyword = view.getTxtSearch().getText();
+                // Bỏ qua nếu là placeholder của thanh search
+                if (keyword.contains("🔍")) {
+                    loadData("");
                 } else {
-                    JOptionPane.showMessageDialog(view, "Xóa thất bại!");
+                    loadData(keyword);
                 }
             }
+        });
+
+        // 3. Xử lý sự kiện khi nhấn vào icon con mắt 👁 trong bảng
+        view.addXemChiTietListener(e -> showHoaDonChiTiet());
+    }
+
+    /**
+     * Nạp dữ liệu vào bảng và lọc theo từ khóa (Tìm kiếm đa năng)
+     */
+    public void loadData(String keyword) {
+        view.clearTable();
+        String searchKey = removeAccent(keyword.toLowerCase().trim());
+        List<HoaDon> list = dao.getAll();
+
+        for (HoaDon hd : list) {
+            // Lấy các trường thông tin muốn tìm kiếm
+            String maHD = hd.getMaHD().toLowerCase();
+            String tenKH = removeAccent(hd.getTenKH().toLowerCase());
+            String tenNV = removeAccent(hd.getTenNV().toLowerCase());
+
+            // Nếu từ khóa trống hoặc khớp với bất kỳ trường nào thì thêm vào bảng
+            if (searchKey.isEmpty() || maHD.contains(searchKey)
+                    || tenKH.contains(searchKey) || tenNV.contains(searchKey)) {
+                view.addRow(hd);
+            }
         }
     }
 
+    /**
+     * Logic hiển thị cửa sổ Chi tiết hóa đơn
+     */
     private void showHoaDonChiTiet() {
         int row = view.getSelectedRow();
-        if (row < 0) {
-            JOptionPane.showMessageDialog(view, "Vui lòng chọn hóa đơn để xem chi tiết!");
-            return;
-        }
+        if (row < 0) return;
+
+        // Lấy mã hóa đơn từ cột đầu tiên của dòng đang chọn
         String maHD = view.getTable().getValueAt(row, 0).toString();
         String tenKH = view.getTable().getValueAt(row, 2).toString();
-        String strTien = view.getTable().getValueAt(row, 4).toString();
-        double tongTien = 0;
-        try {
-            strTien = strTien.replace(" VNĐ", "").replace(",", "").replace(".", "").trim();
-            tongTien = Double.parseDouble(strTien);
-        } catch (Exception e) { e.printStackTrace(); }
 
+        // Lấy tổng tiền (Xử lý chuỗi "100.000 đ" về dạng double)
+        String strTien = view.getTable().getValueAt(row, 4).toString().replaceAll("[^0-9]", "");
+        double tongTien = Double.parseDouble(strTien);
+
+        // Lấy danh sách chi tiết món từ DAO
         List<ChiTietHoaDon> details = dao.getChiTiet(maHD);
+
+        // Hiển thị Dialog chi tiết
         JFrame parentFrame = (JFrame) SwingUtilities.getWindowAncestor(view);
-        
-        
         ChiTietHoaDonView dialog = new ChiTietHoaDonView(parentFrame);
         dialog.setDetails(maHD, tenKH, tongTien, details);
+        dialog.setLocationRelativeTo(view);
         dialog.setVisible(true);
+    }
+
+    private String removeAccent(String s) {
+        if (s == null) return "";
+        String temp = Normalizer.normalize(s, Normalizer.Form.NFD);
+        Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+        return pattern.matcher(temp).replaceAll("")
+                .replace('đ', 'd').replace('Đ', 'D');
     }
 }

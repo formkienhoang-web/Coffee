@@ -188,7 +188,7 @@ public class MainView extends JFrame {
     private void initSidebar() {
         JPanel pnlSidebar = new JPanel();
         pnlSidebar.setPreferredSize(new Dimension(230, 0));
-        pnlSidebar.setBackground(SIDEBAR_COLOR);
+        pnlSidebar.setBackground(new Color(111, 78, 55));
         pnlSidebar.setLayout(new BoxLayout(pnlSidebar, BoxLayout.Y_AXIS));
 
         lblRole = new JLabel("ADMIN");
@@ -251,13 +251,13 @@ public class MainView extends JFrame {
 
         btn.addMouseListener(new MouseAdapter() {
             public void mouseEntered(MouseEvent e) {
-                if (!btn.getBackground().equals(ACTIVE_COLOR)) {
+                if (!btn.getBackground().equals(new Color(111, 78, 55))) {
                     btn.setBackground(HOVER_COLOR);
                 }
             }
 
             public void mouseExited(MouseEvent e) {
-                if (!btn.getBackground().equals(ACTIVE_COLOR)) {
+                if (!btn.getBackground().equals(new Color(111, 78, 55))) {
                     btn.setBackground(SIDEBAR_COLOR);
                 }
             }
@@ -295,10 +295,10 @@ public class MainView extends JFrame {
     private void updateActiveButton(String active) {
         menuButtons.forEach((k, v) -> {
             if (k.equals(active)) {
-                v.setBackground(ACTIVE_COLOR);
+                v.setBackground(new Color(111, 78, 55));
                 v.setFont(new Font("Segoe UI", Font.BOLD, 15));
             } else {
-                v.setBackground(SIDEBAR_COLOR);
+                v.setBackground(new Color(111, 78, 55));
                 v.setFont(new Font("Segoe UI", Font.PLAIN, 15));
             }
             v.setForeground(TEXT_COLOR);

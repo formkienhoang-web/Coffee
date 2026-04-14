@@ -45,7 +45,7 @@ public class ThucDonView extends JPanel {
         JPanel pnlAction = new JPanel(new BorderLayout(25,0));
         pnlAction.setOpaque(false);
 
-        txtSearch = new JTextField("  🔍  Tìm kiếm theo tên cà phê...") {
+        txtSearch = new JTextField("  🔍  Tìm kiếm theo tên món...") {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
@@ -61,7 +61,7 @@ public class ThucDonView extends JPanel {
         txtSearch.setBorder(BorderFactory.createEmptyBorder(0, 15, 0, 15));
         txtSearch.setForeground(Color.GRAY);
 
-        btnThem = new JButton("+  Thêm Cà Phê") {
+        btnThem = new JButton("+  Thêm Món") {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -92,7 +92,7 @@ public class ThucDonView extends JPanel {
         pnlTop.add(pnlAction, BorderLayout.CENTER);
 
         // --- 3. TABLE VỚI HIỆU ỨNG HOVER ---
-        String[] cols = {"Mã", "Ảnh", "Tên món", "Giá", "ĐVT", "Danh mục", "Hành động"};
+        String[] cols = {"Mã món", "Ảnh", "Tên món", "Giá", "ĐVT", "Danh mục", "Hành động"};
         model = new DefaultTableModel(cols, 0) {
             @Override
             public Class<?> getColumnClass(int c) { return (c == 1) ? Icon.class : Object.class; }
@@ -106,27 +106,36 @@ public class ThucDonView extends JPanel {
             @Override
             public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
                 Component c = super.prepareRenderer(renderer, row, column);
-                // Màu nền mặc định
+
+                // ✅ Anti-aliasing giống HoaDonView
+                if (c instanceof JComponent) {
+                    ((JComponent) c).putClientProperty(
+                            RenderingHints.KEY_TEXT_ANTIALIASING,
+                            RenderingHints.VALUE_TEXT_ANTIALIAS_ON
+                    );
+                }
+
+                // ✅ Đồng bộ font
+                c.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+
                 c.setBackground(Color.WHITE);
 
-                // Hiệu ứng di chuột (Hover) - Nháy nhẹ xanh nhạt
+                // Hover
                 if (row == hoveredRow) {
                     c.setBackground(new Color(245, 248, 250));
                 }
 
-                // Hiệu ứng khi được chọn (Selection) - Phối màu xanh dịu
+                // Selected
                 if (isRowSelected(row)) {
                     c.setBackground(new Color(204, 243, 229));
-                    c.setFont(new Font("Segoe UI", Font.ITALIC, 14));
                     c.setForeground(new Color(0, 105, 92));
                 } else {
-                    c.setForeground(Color.BLACK);
+                    c.setForeground(new Color(60, 60, 60));
                 }
                 return c;
             }
 
             {
-                // Bắt sự kiện di chuyển chuột trên bảng
                 MouseAdapter ma = new MouseAdapter() {
                     @Override
                     public void mouseMoved(MouseEvent e) {
@@ -136,6 +145,7 @@ public class ThucDonView extends JPanel {
                             repaint();
                         }
                     }
+
                     @Override
                     public void mouseExited(MouseEvent e) {
                         hoveredRow = -1;
@@ -163,22 +173,55 @@ public class ThucDonView extends JPanel {
     }
 
     private void setupTableStyle() {
-        table.setRowHeight(75);
-        table.setShowGrid(false); // Tắt lưới cho hiện đại
+        table.setRowHeight(60); // giống hoadon
+        table.setShowGrid(false);
         table.setIntercellSpacing(new Dimension(0, 0));
-        table.setFocusable(false); // Tắt khung viền nét đứt khi click
-        table.setFont(new Font("Segoe UI", Font.ITALIC, 14));
+        table.setFocusable(false);
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
 
         JTableHeader header = table.getTableHeader();
-        header.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        header.setBackground(Color.WHITE);
-        header.setForeground(Color.GRAY);
         header.setPreferredSize(new Dimension(0, 50));
-        header.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(240, 240, 240)));
-        ((DefaultTableCellRenderer)header.getDefaultRenderer()).setHorizontalAlignment(JLabel.LEFT);
 
-        table.getColumnModel().getColumn(6).setCellRenderer(new ActionButtonRenderer());
-        table.getColumnModel().getColumn(6).setCellEditor(new ActionButtonEditor(new JCheckBox()));
+        header.setDefaultRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(
+                    JTable table, Object value, boolean isSelected,
+                    boolean hasFocus, int row, int column) {
+
+                JLabel label = (JLabel) super.getTableCellRendererComponent(
+                        table, value, isSelected, hasFocus, row, column);
+
+                label.setFont(new Font("Segoe UI", Font.BOLD, 13));
+                label.setBackground(new Color(242, 245, 248));
+                label.setForeground(Color.GRAY);
+                if (column == 6) {
+                    label.setHorizontalAlignment(JLabel.CENTER);
+                }else if (column==1){
+                    label.setHorizontalAlignment(JLabel.CENTER);
+                }
+                else {
+                    label.setHorizontalAlignment(JLabel.LEFT);
+                }
+
+                // chỉ giữ 1 đường kẻ dưới
+                label.setBorder(BorderFactory.createMatteBorder(
+                        0, 0, 1, 0, new Color(240, 240, 240)));
+
+                return label;
+            }
+        });
+
+        table.getColumnModel().getColumn(6)
+                .setCellRenderer(new ActionButtonRenderer());
+        table.getColumnModel().getColumn(6)
+                .setCellEditor(new ActionButtonEditor(new JCheckBox()));
+        table.getColumnModel().getColumn(0).setPreferredWidth(20);   // Mã món
+        table.getColumnModel().getColumn(1).setPreferredWidth(80);   // Ảnh
+        table.getColumnModel().getColumn(2).setPreferredWidth(160);  // Tên món
+        table.getColumnModel().getColumn(3).setPreferredWidth(100);  // Giá
+        table.getColumnModel().getColumn(4).setPreferredWidth(60);   // ĐVT
+        table.getColumnModel().getColumn(5).setPreferredWidth(100);  // Danh mục
+        table.getColumnModel().getColumn(6).setPreferredWidth(90);   // Hành động
     }
 
     private void initDialogForm() {
@@ -292,7 +335,7 @@ public class ThucDonView extends JPanel {
         private JButton btnDeleteIcon = new JButton("🗑");
 
         public ActionButtonRenderer() {
-            setLayout(new FlowLayout(FlowLayout.LEFT, 10, 20));
+            setLayout(new FlowLayout(FlowLayout.CENTER, 0, 10));
             setOpaque(true);
             // Định dạng nhanh cho icon
             setupIcon(btnEditIcon, COLOR_ACCENT);
@@ -314,7 +357,7 @@ public class ThucDonView extends JPanel {
 
     // Thay thế Class ActionButtonEditor để bắt được đúng nút nào được nhấn
     class ActionButtonEditor extends DefaultCellEditor {
-        private JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 20));
+        private JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 10));
         private JButton btnEdit = new JButton("✎");
         private JButton btnDelete = new JButton("🗑");
 
