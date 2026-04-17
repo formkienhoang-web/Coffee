@@ -313,6 +313,9 @@ public class MainView extends JFrame {
             hideMenu("Doanh thu");
             hideMenu("Danh mục");
         }
+//        if ("ADMIN".equals(role)) {
+//            hideMenu("Doanh thu");
+//        }
         if (role != null) {
             lblUser.setText("Xin chào, " + Session.tenNV);
             trangChuView.setUserInfo(role, role);

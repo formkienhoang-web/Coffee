@@ -252,7 +252,7 @@ public class NhanVienView extends JPanel {
         txtPassword.setPreferredSize(new Dimension(0, 38));
         txtPassword.setBorder(BorderFactory.createCompoundBorder(new ModernBorder(8), BorderFactory.createEmptyBorder(0,12,0,12)));
 
-        cboRole = new JComboBox<>(new String[]{"Nhân viên", "Admin"});
+        cboRole = new JComboBox<>(new String[]{"NHÂN VIÊN", "ADMIN"});
         cboRole.setPreferredSize(new Dimension(0, 38));
         cboRole.setBorder(new ModernBorder(8));
 
