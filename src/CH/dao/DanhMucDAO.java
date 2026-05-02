@@ -123,4 +123,20 @@ public class DanhMucDAO {
 
         return list;
     }
+    // Thêm vào cuối file DanhMucDAO.java
+    public boolean isExistsTenDanhMuc(String ten) {
+        String sql = "SELECT COUNT(*) FROM DanhMuc WHERE TenDanhMuc = ?";
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, ten);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 }

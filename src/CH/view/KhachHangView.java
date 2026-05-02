@@ -178,7 +178,7 @@ public class KhachHangView extends JPanel {
         pnlMain.setBorder(new EmptyBorder(25, 35, 10, 35));
         pnlMain.setOpaque(false);
 
-        txtMaKH = createModernTextField("Tự động", false);
+        txtMaKH = createModernTextField("Tự động sinh", false);
         txtTenKH = createModernTextField("Nhập tên khách hàng...", true);
         txtTheLoai = createModernTextField("Loại khách hàng...", true);
 
@@ -200,6 +200,7 @@ public class KhachHangView extends JPanel {
         addModernInput(pnlMain, "Địa chỉ", txtDiaChi, true);
 
         btnLuu = createStyledButton("Xác nhận Lưu", COLOR_ACCENT);
+        btnLuu.setPreferredSize(new Dimension(0, 45));
         JPanel pnlFooter = new JPanel(new BorderLayout());
         pnlFooter.setOpaque(false); pnlFooter.setBorder(new EmptyBorder(10, 35, 30, 35));
         pnlFooter.add(btnLuu, BorderLayout.CENTER);
@@ -284,7 +285,8 @@ public class KhachHangView extends JPanel {
     private void addModernInput(JPanel container, String title, JComponent input, boolean req) {
         JPanel p = new JPanel(new BorderLayout(0, 5)); p.setOpaque(false); p.setBorder(new EmptyBorder(0, 0, 12, 0));
         JLabel l = new JLabel(req ? "<html>" + title + " <font color='red'>*</font></html>" : title);
-        l.setFont(new Font("Segoe UI", Font.BOLD, 13)); l.setForeground(new Color(80, 80, 80));
+        l.setFont(new Font("Segoe UI", Font.BOLD, 13));
+//        l.setForeground(new Color(80, 80, 80));
         p.add(l, BorderLayout.NORTH); p.add(input, BorderLayout.CENTER);
         container.add(p);
     }
@@ -326,6 +328,8 @@ public class KhachHangView extends JPanel {
     public JButton getBtnSua() { return btnSua; }
     public JButton getBtnXoa() { return btnXoa; }
     public JTextField getTxtSearch() { return txtSearch; }
+    public JRadioButton getRdoNam() { return rdoNam; }
+    public JRadioButton getRdoNu() { return rdoNu; }
 
     public void addRow(KhachHang kh) {
         model.addRow(new Object[]{
@@ -342,7 +346,7 @@ public class KhachHangView extends JPanel {
     }
 
     public void clearForm() {
-        txtMaKH.setText("Tự động"); txtTenKH.setText(""); txtTheLoai.setText("");
+        txtMaKH.setText("Tự động sinh"); txtTenKH.setText(""); txtTheLoai.setText("");
         btnGroupGender.clearSelection(); txtEmail.setText(""); txtSDT.setText(""); txtDiaChi.setText("");
     }
     // 1. Lấy dữ liệu từ Form trong Dialog để tạo đối tượng KhachHang

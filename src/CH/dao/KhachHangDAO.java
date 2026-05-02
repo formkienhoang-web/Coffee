@@ -67,7 +67,7 @@ public class KhachHangDAO {
         try {
             Connection cons = DBConnection.getConnection();
             // Tự động lấy mã mới trước khi chèn nếu mã đang là "Tự động"
-            if (kh.getMaKH() == null || kh.getMaKH().equals("Tự động")) {
+            if (kh.getMaKH() == null || kh.getMaKH().equals("Tự động sinh")) {
                 kh.setMaKH(getNewID());
             }
 
@@ -161,5 +161,25 @@ public class KhachHangDAO {
             if (rs.next()) count = rs.getInt(1);
         } catch (Exception e) { e.printStackTrace(); }
         return count;
+    }
+    public boolean isExistsSdt(String sdt) {
+        boolean exists = false;
+        try {
+            Connection cons = DBConnection.getConnection();
+            // Truy vấn đếm số lượng bản ghi có cùng số điện thoại
+            String sql = "SELECT COUNT(*) FROM KhachHang WHERE SoDienThoai = ?";
+            PreparedStatement ps = cons.prepareStatement(sql);
+            ps.setString(1, sdt);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                // Nếu kết quả > 0 nghĩa là SĐT đã tồn tại
+                exists = rs.getInt(1) > 0;
+            }
+            ps.close();
+            cons.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return exists;
     }
 }

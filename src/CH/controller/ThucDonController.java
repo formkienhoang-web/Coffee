@@ -53,7 +53,7 @@ public class ThucDonController {
         view.addSuaListener(e -> {
             int row = view.getSelectedRow();
             if (row < 0) {
-                JOptionPane.showMessageDialog(view, "Vui lòng chọn món để sửa!");
+                JOptionPane.showMessageDialog(view.getDialogForm(), "Vui lòng chọn món để sửa!");
                 return;
             }
 
@@ -75,33 +75,65 @@ public class ThucDonController {
         view.getBtnLuu().addActionListener(e -> {
             MonAn m = view.getMonAnInfo();
 
-            if (m.getTenMon().isEmpty()) {
-                JOptionPane.showMessageDialog(view, "Tên món không được để trống!");
+            // 1. Validate Tên món
+            if (m.getTenMon() == null || m.getTenMon().trim().isEmpty()) {
+                JOptionPane.showMessageDialog(view.getDialogForm(), "Tên món không được để trống!");
                 return;
             }
 
+            // 2. Validate Đơn giá (Phải là số và > 0)
+            // Giả sử getMonAnInfo() trả về double, bạn nên validate ngay tại View hoặc ép kiểu tại đây
+            if (m.getDonGia() <= 0) {
+                JOptionPane.showMessageDialog(view.getDialogForm(), "Giá không được để trống và phải là số dương");
+                return;
+            }
+            if (m.getDonViTinh() == null || m.getDonViTinh().trim().isEmpty()) {
+                JOptionPane.showMessageDialog(view.getDialogForm(), "Đơn vị tính không được để trống!");
+                return;
+            }
+
+            // 3. Validate Danh mục (Nếu chưa chọn)
+            if (view.getCboDanhMuc().getSelectedIndex() <= 0) { // Giả sử item 0 là rỗng ""
+                JOptionPane.showMessageDialog(view.getDialogForm(), "Vui lòng chọn danh mục cho món ăn!");
+                return;
+            }
+
+
+            if (!isEdit) {
+                // Chế độ THÊM MỚI: Tên món không được trùng bất kỳ ai
+                if (dao.isExistsTenMon(m.getTenMon().trim())) {
+                    JOptionPane.showMessageDialog(view.getDialogForm(), "Tên món ăn này đã tồn tại trong thực đơn!");
+                    return;
+                }
+            } else {
+                // Chế độ SỬA: Chỉ báo trùng nếu đổi sang tên của một món KHÁC
+                MonAn oldMon = dao.getByID(currentMaMon);
+                if (oldMon != null && !oldMon.getTenMon().equalsIgnoreCase(m.getTenMon().trim())) {
+                    if (dao.isExistsTenMon(m.getTenMon().trim())) {
+                        JOptionPane.showMessageDialog(view.getDialogForm(), "Tên món mới bị trùng với một món khác đang có!");
+                        return;
+                    }
+                }
+            }
+
+            // --- 5. Thực hiện Lưu ---
             boolean success;
-
             if (isEdit) {
-                // 🔥 DÙNG ID ĐÃ LƯU
                 m.setMaMon(currentMaMon);
-
                 success = dao.update(m);
-
-                if (success) JOptionPane.showMessageDialog(view, "Sửa thành công!");
-                else JOptionPane.showMessageDialog(view, "Sửa thất bại!");
             } else {
                 m.setMaMon(dao.getNewID());
                 success = dao.add(m);
-
-                if (success) JOptionPane.showMessageDialog(view, "Thêm thành công!");
-                else JOptionPane.showMessageDialog(view, "Thêm thất bại!");
             }
 
             if (success) {
+                JOptionPane.showMessageDialog(view.getDialogForm(), (isEdit ? "Cập nhật" : "Thêm mới") + " món ăn thành công!");
+                view.getDialogForm().dispose();
+                loadData("");
                 reload();
-                view.getDialogForm().setVisible(false);
-                currentMaMon = null; // reset
+                currentMaMon = null;
+            } else {
+                JOptionPane.showMessageDialog(view.getDialogForm(), "Thao tác thất bại. Vui lòng kiểm tra lại!");
             }
         });
 
@@ -121,6 +153,7 @@ public class ThucDonController {
                 if (dao.delete(ma)) {
                     reload(); // 🔥 cập nhật bên đặt món luôn
                     JOptionPane.showMessageDialog(view, "Xóa thành công!");
+                    loadData("");
                 }
             }
         });

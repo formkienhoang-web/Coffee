@@ -408,6 +408,8 @@ public class NhanVienView extends JPanel {
     public void setMaNV(String ma) { txtMaNV.setText(ma); }
     public void clearTable() { model.setRowCount(0); }
     public void addRow(Object[] row) { model.addRow(row); }
+    public JRadioButton getRdoNam() { return rdoNam; }
+    public JRadioButton getRdoNu() { return rdoNu; }
 
     class ModernBorder extends AbstractBorder {
         private int r; public ModernBorder(int r) { this.r = r; }

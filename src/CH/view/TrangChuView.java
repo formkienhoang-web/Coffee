@@ -134,14 +134,27 @@ public class TrangChuView extends JPanel {
 
     // --- HÀM TẠO NÚT LÀM MỚI DỮ LIỆU ĐẸP ---
     private JButton createRefreshButton(String text) {
-        JButton btn = new JButton(text);
-        btn.setForeground(Color.RED);
-        btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        JButton btn = new JButton(text){
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new Color(53, 79, 78));
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15); // Chuẩn viên thuốc
+                g2.setColor(Color.WHITE);
+                g2.setFont(new Font("Segoe UI", Font.BOLD, 14));
+                FontMetrics fm = g2.getFontMetrics();
+                int x = (getWidth() - fm.stringWidth(getText())) / 2;
+                int y = (getHeight() + fm.getAscent() - fm.getDescent()) / 2;
+                g2.drawString(getText(), x, y);
+                g2.dispose();
+            }
+        };
+        btn.setPreferredSize(new Dimension(160, 45));
+        btn.setContentAreaFilled(false);
+        btn.setBorderPainted(false);
         btn.setFocusPainted(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btn.setBackground(new Color(0, 150, 136));
-        btn.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
-        btn.setOpaque(true);
 
         // Hover effect
         btn.addMouseListener(new java.awt.event.MouseAdapter() {

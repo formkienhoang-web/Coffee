@@ -236,9 +236,9 @@ public class ThucDonView extends JPanel {
         // Header thu nhỏ lại
         JPanel pnlHeader = new JPanel(new FlowLayout(FlowLayout.LEFT, 25, 15));
         pnlHeader.setOpaque(false);
-        JLabel lblHeaderTitle = new JLabel("Thêm Món Mới");
-        lblHeaderTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        pnlHeader.add(lblHeaderTitle);
+//        JLabel lblHeaderTitle = new JLabel("Thêm Món Mới");
+//        lblHeaderTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
+//        pnlHeader.add(lblHeaderTitle);
 
         // Panel chính chứa Form
         JPanel pnlMainForm = new JPanel();
@@ -413,7 +413,7 @@ public class ThucDonView extends JPanel {
     }
 
     public void clearForm() {
-        txtMaMon.setText("Tự động"); txtTenMon.setText(""); txtDonGia.setText(""); txtDVT.setText("");
+        txtMaMon.setText("Tự động sinh"); txtTenMon.setText(""); txtDonGia.setText(""); txtDVT.setText("");
         duongDanAnh = ""; lblHinhAnh.setIcon(null); lblHinhAnh.setText("Chưa có ảnh");
     }
 
@@ -468,7 +468,7 @@ public class ThucDonView extends JPanel {
         String labelText = required ? "<html>" + title + " <font color='red'>*</font></html>" : title;
         JLabel lblTitle = new JLabel(labelText);
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 13)); // Giảm font nhãn 1 tí
-        lblTitle.setForeground(new Color(80, 80, 80));
+//        lblTitle.setForeground(new Color(80, 80, 80));
 
         pnlGroup.add(lblTitle, BorderLayout.NORTH);
         pnlGroup.add(input, BorderLayout.CENTER);

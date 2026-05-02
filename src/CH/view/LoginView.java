@@ -32,7 +32,7 @@ public class LoginView extends JFrame {
         card.setBorder(new EmptyBorder(20, 25, 20, 25));
         container.add(card);
 
-        JLabel lblTitle = new JLabel("HỆ THỐNG QUẢN LÝ QUÁN COFFEE", SwingConstants.CENTER);
+        JLabel lblTitle = new JLabel("HỆ THỐNG QUẢN LÝ QUÁN DINOCOFFEE", SwingConstants.CENTER);
         lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
         lblTitle.setForeground(PRIMARY_COLOR);
         card.add(lblTitle, BorderLayout.NORTH);
@@ -61,7 +61,7 @@ public class LoginView extends JFrame {
         // ===== NÚT ĐĂNG NHẬP =====
         btnLogin = new JButton("ĐĂNG NHẬP");
         btnLogin.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        btnLogin.setForeground(Color.RED);
+        btnLogin.setForeground(PRIMARY_COLOR);
         btnLogin.setBackground(PRIMARY_COLOR);
         btnLogin.setPreferredSize(new Dimension(150, 42));
         btnLogin.setFocusPainted(false);

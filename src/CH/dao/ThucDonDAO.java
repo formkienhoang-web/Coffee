@@ -179,4 +179,21 @@ public class ThucDonDAO {
         }
         return mon;
     }
+    // Thêm vào cuối file ThucDonDAO.java
+    public boolean isExistsTenMon(String tenMon) {
+        boolean exists = false;
+        String sql = "SELECT COUNT(*) FROM ThucDon WHERE TenMon = ?";
+        try (Connection cons = DBConnection.getConnection();
+             PreparedStatement ps = cons.prepareStatement(sql)) {
+            ps.setString(1, tenMon);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    exists = rs.getInt(1) > 0;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return exists;
+    }
 }

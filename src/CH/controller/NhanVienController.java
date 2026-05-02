@@ -31,9 +31,8 @@ public class NhanVienController {
             private void search() {
                 String keyword = view.getTxtSearch().getText();
                 // Bỏ qua nếu là placeholder mặc định
-                if (keyword.contains("🔍")) {
-                    loadDataToView("");
-                } else {
+                if (keyword.contains("🔍")) { loadDataToView(""); }
+                else {
                     loadDataToView(keyword.trim());
                 }
             }
@@ -85,26 +84,66 @@ public class NhanVienController {
         // 5. Sự kiện nút Lưu (Trong Dialog)
         view.getBtnLuu().addActionListener(e -> {
             NhanVien nv = view.getNhanVienInfo();
+            if (nv.getTenNV().trim().isEmpty() || nv.getNgaySinh().trim().isEmpty() ||
+                    nv.getChucVu().trim().isEmpty() || nv.getSoDienThoai().trim().isEmpty() ||
+                    nv.getUsername().trim().isEmpty() ||
+                    nv.getPassword().trim().isEmpty() ) {
 
-            // Validate cơ bản
-            if (nv.getTenNV().isEmpty() || nv.getSoDienThoai().isEmpty()) {
-                JOptionPane.showMessageDialog(view.getDialogForm(), "Vui lòng nhập đầy đủ thông tin bắt buộc!");
+                JOptionPane.showMessageDialog(view.getDialogForm(), "Vui lòng nhập đầy đủ thông tin có dấu (*)");
+                return;
+            }
+            if (!view.getRdoNam().isSelected() && !view.getRdoNu().isSelected()) {
+                JOptionPane.showMessageDialog(view.getDialogForm(), "Vui lòng chọn giới tính!");
+                return;
+            }
+            if (!nv.getSoDienThoai().matches("^0\\d{9}$")) {
+                JOptionPane.showMessageDialog(view.getDialogForm(), "SĐT không hợp lệ (Phải có 10 chữ số và bắt đầu bằng 0)!");
                 return;
             }
 
-            boolean thanhCong;
-            if (isEdit) {
-                thanhCong = nhanVienDAO.update(nv);
-            } else {
-                thanhCong = nhanVienDAO.insert(nv);
+            // --- 3. Validate Password (Nếu thêm mới thì bắt buộc có Pass) ---
+            if (!isEdit && nv.getPassword().isEmpty()) {
+                JOptionPane.showMessageDialog(view.getDialogForm(), "Mật khẩu cho nhân viên mới không được để trống!");
+                return;
             }
 
+            // --- 4. Logic Chống trùng thông minh (SĐT và Username) ---
+            if (!isEdit) {
+                // Thêm mới: Check trùng tuyệt đối
+                if (nhanVienDAO.isExistsSdt(nv.getSoDienThoai())) {
+                    JOptionPane.showMessageDialog(view.getDialogForm(), "Số điện thoại này đã thuộc về nhân viên khác!");
+                    return;
+                }
+                if (nhanVienDAO.isExistsUsername(nv.getUsername())) {
+                    JOptionPane.showMessageDialog(view.getDialogForm(), "Tên đăng nhập (Username) đã tồn tại!");
+                    return;
+                }
+            } else {
+                // Sửa: Lấy dữ liệu cũ để đối chiếu
+                NhanVien oldNv = nhanVienDAO.getByID(nv.getMaNV());
+                if (oldNv != null) {
+                    // Check trùng SĐT nếu thay đổi
+                    if (!oldNv.getSoDienThoai().equals(nv.getSoDienThoai()) && nhanVienDAO.isExistsSdt(nv.getSoDienThoai())) {
+                        JOptionPane.showMessageDialog(view.getDialogForm(), "Số điện thoại mới bị trùng với nhân viên khác!");
+                        return;
+                    }
+                    // Check trùng Username nếu thay đổi
+                    if (!oldNv.getUsername().equals(nv.getUsername()) && nhanVienDAO.isExistsUsername(nv.getUsername())) {
+                        JOptionPane.showMessageDialog(view.getDialogForm(), "Username mới đã tồn tại trên hệ thống!");
+                        return;
+                    }
+                }
+            }
+
+            // --- 5. Thực hiện Lưu ---
+            boolean thanhCong = isEdit ? nhanVienDAO.update(nv) : nhanVienDAO.insert(nv);
+
             if (thanhCong) {
-                JOptionPane.showMessageDialog(view.getDialogForm(), (isEdit ? "Cập nhật" : "Thêm mới") + " thành công!");
+                JOptionPane.showMessageDialog(view.getDialogForm(), (isEdit ? "Cập nhật" : "Thêm mới") + " nhân viên thành công!");
                 view.getDialogForm().dispose();
                 loadDataToView("");
             } else {
-                JOptionPane.showMessageDialog(view.getDialogForm(), "Thao tác thất bại. Vui lòng kiểm tra lại!");
+                JOptionPane.showMessageDialog(view.getDialogForm(), "Thao tác thất bại. Vui lòng kiểm tra lại Database!");
             }
         });
     }

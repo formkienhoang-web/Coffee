@@ -26,7 +26,7 @@ public class XacNhanThanhToanDialog extends JDialog {
         pnlHead.add(txtTenKhach);
         
         // --- THÊM Ô NHẬP SĐT ---
-        pnlHead.add(new JLabel("Số điện thoại (Để lưu điểm/tìm kiếm):"));
+        pnlHead.add(new JLabel("Số điện thoại (Để tìm kiếm):"));
         txtSDT = new JTextField();
         pnlHead.add(txtSDT);
         // -----------------------
@@ -51,7 +51,7 @@ public class XacNhanThanhToanDialog extends JDialog {
         
         lblTongTienFinal = new JLabel("Tổng cộng: " + String.format("%,.0f VNĐ", tongTien), SwingConstants.CENTER);
         lblTongTienFinal.setFont(new Font("Arial", Font.BOLD, 18));
-        lblTongTienFinal.setForeground(Color.RED);
+        lblTongTienFinal.setForeground(Color.BLACK);
         
         btnXacNhanIn = new JButton("XÁC NHẬN & IN");
         btnXacNhanIn.setBackground(new Color(0, 100, 0));

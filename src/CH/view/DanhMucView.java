@@ -310,8 +310,25 @@ public class DanhMucView extends JPanel {
             super(cb); panel.setOpaque(true);
             JButton e = createIconBtn("✎", COLOR_ACCENT);
             JButton d = createIconBtn("🗑", new Color(231, 76, 60));
-            e.addActionListener(al -> { fireEditingStopped(); btnSua.doClick(); });
-            d.addActionListener(al -> { fireEditingStopped(); btnXoa.doClick(); });
+            e.addActionListener(al -> {
+                int row = table.getEditingRow(); // 🔥 lấy đúng row đang click
+                fireEditingStopped();
+
+                if (row >= 0) {
+                    table.setRowSelectionInterval(row, row); // set lại selection
+                    SwingUtilities.invokeLater(() -> btnSua.doClick());
+                }
+            });
+
+            d.addActionListener(al -> {
+                int row = table.getEditingRow();
+                fireEditingStopped();
+
+                if (row >= 0) {
+                    table.setRowSelectionInterval(row, row);
+                    SwingUtilities.invokeLater(() -> btnXoa.doClick());
+                }
+            });
             panel.add(e); panel.add(d);
         }
         public Component getTableCellEditorComponent(JTable t, Object v, boolean s, int r, int c) {
@@ -341,7 +358,16 @@ public class DanhMucView extends JPanel {
     public JButton getBtnLuu() { return btnLuu; }
     public JDialog getDialogForm() { return dialogForm; }
     public JTextField getTxtSearch() { return txtSearch; }
-    public String getTuKhoaTimKiem() { return txtSearch.getText().replace("🔍", "").trim(); }
+    public String getTuKhoaTimKiem() {
+        String text = txtSearch.getText().replace("🔍", "").trim();
+
+        // 🔥 Nếu vẫn là placeholder → coi như rỗng
+        if (text.equalsIgnoreCase("Tìm kiếm danh mục...")) {
+            return "";
+        }
+
+        return text;
+    }
     public void addRow(Object[] row) { model.addRow(new Object[]{row[0], row[1], ""}); }
     public void clearTable() { model.setRowCount(0); }
     public void setForm(String ma, String ten) { txtMaDM.setText(ma); txtTenDM.setText(ten); }

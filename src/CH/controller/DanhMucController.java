@@ -45,6 +45,10 @@ public class DanhMucController {
         // ===== SỬA =====
         view.getBtnSua().addActionListener(e -> {
             int row = view.getTable().getSelectedRow();
+            if (row < 0) {
+                JOptionPane.showMessageDialog(view, "Vui lòng chọn danh mục!");
+                return;
+            }
             if (row >= 0) {
                 isEdit = true;
                 String ma = view.getTable().getValueAt(row, 0).toString();
@@ -107,29 +111,47 @@ public class DanhMucController {
     class SaveListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
+            String ma = view.getMaDM().trim();
             String ten = view.getTenDM().trim();
 
             if (ten.isEmpty()) {
-                JOptionPane.showMessageDialog(view, "Tên danh mục không được để trống!");
+                JOptionPane.showMessageDialog(view.getDialogForm(), "Tên danh mục không được để trống!");
                 return;
+            }
+            if (!isEdit) {
+                // Chế độ THÊM MỚI: Tên không được trùng với bất kỳ mục nào đã có
+                if (dao.isExistsTenDanhMuc(ten)) {
+                    JOptionPane.showMessageDialog(view.getDialogForm(), "Tên danh mục này đã tồn tại!");
+                    return;
+                }
+            } else {
+                // Chế độ SỬA: Lấy tên cũ từ dòng đang chọn trong bảng để đối chiếu
+                int row = view.getTable().getSelectedRow();
+                String tenCu = view.getTable().getValueAt(row, 1).toString();
+
+                // Chỉ kiểm tra trùng nếu người dùng nhập một tên KHÁC với tên cũ
+                if (!ten.equalsIgnoreCase(tenCu)) {
+                    if (dao.isExistsTenDanhMuc(ten)) {
+                        JOptionPane.showMessageDialog(view.getDialogForm(), "Tên danh mục mới bị trùng với một mục khác!");
+                        return;
+                    }
+                }
             }
 
             boolean success;
-            if (!isEdit) {
-                String maMoi = taoMaTuDong();
-                success = dao.insert(maMoi, ten);
+            if (isEdit) {
+                success = dao.update(ma, ten);
             } else {
-                String maHienTai = view.getMaDM();
-                success = dao.update(maHienTai, ten);
+                success = dao.insert(taoMaTuDong(), ten);
             }
 
             if (success) {
-                JOptionPane.showMessageDialog(view, "Cập nhật dữ liệu thành công!");
-                loadDataToView();
+                JOptionPane.showMessageDialog(view, (isEdit ? "Cập nhật" : "Thêm") + " danh mục thành công!");
                 view.getDialogForm().dispose();
+                loadDataToView();
                 refreshOtherScreens();
             } else {
-                JOptionPane.showMessageDialog(view, "Thao tác thất bại!");
+                JOptionPane.showMessageDialog(view.getDialogForm(), "Thao tác thất bại. Vui lòng kiểm tra lại!");
             }
         }
     }
@@ -139,6 +161,11 @@ public class DanhMucController {
         @Override
         public void actionPerformed(ActionEvent e) {
             int row = view.getTable().getSelectedRow();
+            if (row < 0) {
+                JOptionPane.showMessageDialog(view, "Vui lòng chọn danh mục!");
+                return;
+            }
+
             if (row >= 0) {
                 String ma = view.getTable().getValueAt(row, 0).toString();
                 int confirm = JOptionPane.showConfirmDialog(

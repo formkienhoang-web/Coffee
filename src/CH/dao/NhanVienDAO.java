@@ -12,7 +12,7 @@ public class NhanVienDAO {
     // 1. Lấy danh sách nhân viên
     public List<NhanVien> getAll() {
         List<NhanVien> list = new ArrayList<>();
-        String sql = "SELECT * FROM NhanVien ORDER BY MaNV DESC";
+        String sql = "SELECT * FROM NhanVien ORDER BY MaNV ASC";
         try {
             Connection cons = DBConnection.getConnection();
             PreparedStatement ps = cons.prepareStatement(sql);
@@ -205,5 +205,25 @@ public class NhanVienDAO {
         nv.setPassword(rs.getString("Password"));
         nv.setRole(rs.getString("Role"));
         return nv;
+    }
+    // Thêm vào cuối file NhanVienDAO.java
+    public boolean isExistsSdt(String sdt) {
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM NhanVien WHERE SoDienThoai = ?")) {
+            ps.setString(1, sdt);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getInt(1) > 0;
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
+    }
+
+    public boolean isExistsUsername(String user) {
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM NhanVien WHERE Username = ?")) {
+            ps.setString(1, user);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getInt(1) > 0;
+        } catch (Exception e) { e.printStackTrace(); }
+        return false;
     }
 }

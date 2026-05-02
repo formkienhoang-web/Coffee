@@ -70,6 +70,10 @@ public class DatMonController {
         view.clearMenu();
         List<MonAn> list = menuDao.getAll();
         String keyword = view.getTxtSearch().getText().trim();
+
+        if (keyword.equalsIgnoreCase("Tìm món...")) {
+            keyword = "";
+        }
         String danhMuc = view.getCbDanhMuc().getSelectedItem() != null
                 ? view.getCbDanhMuc().getSelectedItem().toString()
                 : "Danh mục";
@@ -78,7 +82,9 @@ public class DatMonController {
             boolean matchName = removeAccent(m.getTenMon()).contains(removeAccent(keyword));
             boolean matchDanhMuc = danhMuc.equals("Danh mục")
                     || danhMuc.equals("Tất cả")
-                    || (m.getTenDanhMuc() != null && m.getTenDanhMuc().equalsIgnoreCase(danhMuc));
+                    || (m.getTenDanhMuc() != null &&
+                    removeAccent(m.getTenDanhMuc())
+                            .equals(removeAccent(danhMuc)));
 
             if (matchName && matchDanhMuc) {
                 view.addMonCard(m.getMaMon(), m.getTenMon(), m.getDonGia(), m.getHinhAnh());
@@ -108,8 +114,8 @@ public class DatMonController {
         currentTotal = 0;
         List<Object[]> data = view.getCartData();
         for (Object[] item : data) {
-            int sl = (int) item[2];
-            double gia = (double) item[3];
+            int sl = Integer.parseInt(item[2].toString());
+            double gia = Double.parseDouble(item[3].toString());
             currentTotal += (sl * gia);
         }
         view.setTongTien(currentTotal);
