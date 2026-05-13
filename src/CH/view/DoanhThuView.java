@@ -67,7 +67,7 @@ public class DoanhThuView extends JPanel {
         lblFilterTitle.setForeground(new Color(60, 60, 60)); // Màu xám đậm cho chuyên nghiệp
 
         txtTuNgay = createStyledTextField("01/01/2025");
-        txtDenNgay = createStyledTextField("31/12/2025");
+        txtDenNgay = createStyledTextField("31/12/2026");
         btnXemBaoCao = new JButton("Xem báo cáo");
         stylePrimaryButton(btnXemBaoCao);
 

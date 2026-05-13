@@ -103,6 +103,7 @@ public class DBConnection {
                     + "TenMon VARCHAR(100),"
                     + "SoLuong INT,"
                     + "DonGia DOUBLE,"
+                    + "Size VARCHAR(5),"
                     + "FOREIGN KEY (MaHD) REFERENCES HoaDon(MaHD) ON DELETE CASCADE)");
 
             // ====== DỮ LIỆU MẪU ======

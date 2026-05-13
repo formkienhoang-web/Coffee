@@ -90,7 +90,7 @@ public class KhachHangController {
 
 // 1. Check rỗng
             if (ten.isEmpty() || loai.isEmpty() || email.isEmpty() || sdt.isEmpty() || diaChi.isEmpty()) {
-                JOptionPane.showMessageDialog(view.getDialogForm(), "Vui lòng nhập đầy đủ thông tin!");
+                JOptionPane.showMessageDialog(view.getDialogForm(), "Vui lòng nhập đầy đủ thông tin có dấu (*)");
                 return;
             }
             if (!ten.matches("^[\\p{L} ]+$")) {

@@ -195,6 +195,9 @@ public class MainView extends JFrame {
         lblRole.setForeground(Color.WHITE);
         lblRole.setFont(new Font("Segoe UI", Font.BOLD, 18));
         lblRole.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lblRole.setHorizontalAlignment(SwingConstants.CENTER);
+        lblRole.setMaximumSize(new Dimension(230, 40));
+        lblRole.setPreferredSize(new Dimension(230, 40));
 
         pnlSidebar.add(Box.createRigidArea(new Dimension(0, 30)));
         pnlSidebar.add(lblRole);
@@ -308,10 +311,10 @@ public class MainView extends JFrame {
     public void setRole(String role) {
         lblRole.setText(role);
         if ("NHÂN VIÊN".equals(role)) {
+            hideMenu("Thực đơn");
             hideMenu("Nhân viên");
-//            hideMenu("Kho");
-            hideMenu("Doanh thu");
             hideMenu("Danh mục");
+            hideMenu("Doanh thu");
         }
 //        if ("ADMIN".equals(role)) {
 //            hideMenu("Doanh thu");

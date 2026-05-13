@@ -92,6 +92,11 @@ public class NhanVienController {
                 JOptionPane.showMessageDialog(view.getDialogForm(), "Vui lòng nhập đầy đủ thông tin có dấu (*)");
                 return;
             }
+            if (!nv.getTenNV().matches("^[\\p{L} ]+$")) {
+                JOptionPane.showMessageDialog(view.getDialogForm(),
+                        "Tên nhân viên không được chứa ký tự đặc biệt!");
+                return;
+            }
             if (!view.getRdoNam().isSelected() && !view.getRdoNu().isSelected()) {
                 JOptionPane.showMessageDialog(view.getDialogForm(), "Vui lòng chọn giới tính!");
                 return;

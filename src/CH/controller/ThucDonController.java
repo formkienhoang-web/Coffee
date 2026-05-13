@@ -80,6 +80,11 @@ public class ThucDonController {
                 JOptionPane.showMessageDialog(view.getDialogForm(), "Tên món không được để trống!");
                 return;
             }
+            if (!m.getTenMon().matches("^[\\p{L} ]+$")) {
+                JOptionPane.showMessageDialog(view.getDialogForm(),
+                        "Tên món không được chứa ký tự đặc biệt!");
+                return;
+            }
 
             // 2. Validate Đơn giá (Phải là số và > 0)
             // Giả sử getMonAnInfo() trả về double, bạn nên validate ngay tại View hoặc ép kiểu tại đây

@@ -118,6 +118,11 @@ public class DanhMucController {
                 JOptionPane.showMessageDialog(view.getDialogForm(), "Tên danh mục không được để trống!");
                 return;
             }
+            if (!ten.matches("^[\\p{L} ]+$")) {
+                JOptionPane.showMessageDialog(view.getDialogForm(),
+                        "Tên danh mục không được chứa ký tự đặc biệt!");
+                return;
+            }
             if (!isEdit) {
                 // Chế độ THÊM MỚI: Tên không được trùng với bất kỳ mục nào đã có
                 if (dao.isExistsTenDanhMuc(ten)) {
